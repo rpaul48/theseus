@@ -15,6 +15,33 @@ sig Square {
   connections: set Square
 }
 
+
+
+pred validConnections {
+  -- symmetric
+  connections = ~connections
+
+  -- non reflexive
+  no iden & connections
+
+  -- can only have connections to adjacent squares
+  all sq1, sq2: Square | sq1->sq2 in connections => {
+    ((abs[subtract[sum[sq1.row], sum[sq2.row]]] = 1) and sq1.col = sq2.col)
+    or ((abs[subtract[sum[sq1.col], sum[sq2.col]]] = 1) and sq1.row = sq2.row)
+  }
+
+  -- path between all pairs of squares
+  all sq1, sq2: Square | sq1 in sq2.^connections
+  
+
+
+  -- ideas for walls
+  -- specify explicitly where walls should exist/how many
+  -- constrain num connections per square
+
+
+}
+
 pred validMaze {
   -- 0-3 rows/columns
   all sq: Square | {
@@ -27,8 +54,9 @@ pred validMaze {
     {(sq1.col = sq2.col) and (sq1.row = sq2.row)} iff sq1 = sq2
   }
 
-
   #Square = 16
+
+  validConnections
 }
 
 run validMaze for 16 Square, exactly 5 Int
