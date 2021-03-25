@@ -9,13 +9,19 @@ abstract sig Player {
 one sig Theseus extends Player {}
 one sig Minotaur extends Player {}
 
+one sig Game { 
+  var turn: one Player 
+}
+
 sig Square {
   row: one Int,
   col: one Int,
   connections: set Square
 }
 
-
+one sig Exit {
+  position: one Square
+}
 
 pred validConnections {
   -- symmetric
@@ -32,14 +38,12 @@ pred validConnections {
 
   -- path between all pairs of squares
   all sq1, sq2: Square | sq1 in sq2.^connections
-  
-
 
   -- ideas for walls
   -- specify explicitly where walls should exist/how many
   -- constrain num connections per square
 
-
+  -- no sq: Square | #sq.connections = 3
 }
 
 pred validMaze {
@@ -56,18 +60,53 @@ pred validMaze {
 
   #Square = 16
 
+  -- exit location is valid
+  (Exit.position).row = sing[3]
+  (Exit.position).col = sing[3]
+
   validConnections
 }
 
 run validMaze for 16 Square, exactly 5 Int
 
-pred init{}
+pred init{
+  -- constrain initial theseus position
 
+  -- constrain initial minotaur position
+}
 
-/*
+pred doNothing {
+  position' = position
+  turn' != turn
+}
 
+pred theseusMove {
+  -- preconditions
+  Theseus in Game.turn 
 
+  doNothing
 
+}
 
+pred minotaurMove {
+  -- preconditions
+  Minotaur in Game.turn
 
-*/
+  doNothing
+}
+
+pred win {
+  Theseus.location in Exit.position
+  always doNothing
+}
+
+pred lose {
+  Minotaur.location in Theseus.location
+  always doNothing
+}
+
+pred traces {
+  validMaze
+  init
+  always (theseusMove or minotaurMove) or win or lose
+}
