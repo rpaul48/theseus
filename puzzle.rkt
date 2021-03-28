@@ -67,7 +67,7 @@ pred validMaze {
   validConnections
 }
 
-run validMaze for 16 Square, exactly 5 Int
+// run validMaze for 16 Square, exactly 5 Int
 
 pred init{
   -- constrain initial theseus position
@@ -76,7 +76,7 @@ pred init{
 }
 
 pred doNothing {
-  position' = position
+  location' = location
   turn' != turn
 }
 
@@ -88,11 +88,75 @@ pred theseusMove {
 
 }
 
+// fun getDist[s1: Square, s2: Square]: Int {
+//   sing[abs[sum[s1.row] - sum[s2.row]] + abs[sum[s1.col] - sum[s2.col]]]
+// }
+
+// fun getCoordDist[x1: Int, x2: Int]: Int {
+//   sing[abs[sum[x1.row] - sum[x2.row]]]
+// }
+
 pred minotaurMove {
   -- preconditions
   Minotaur in Game.turn
 
-  doNothing
+  Theseus.location = Theseus.(location')
+
+  {
+    some sq: (Minotaur.location).connections.connections | {
+      abs[subtract[sum[sq.row], sum[(Theseus.location).row]]] <= abs[subtract[sum[(Minotaur.location).row], sum[(Theseus.location).row]]]
+
+      abs[subtract[sum[sq.col], sum[(Theseus.location).col]]] <= abs[subtract[sum[(Minotaur.location).col], sum[(Theseus.location).col]]]
+
+      ((abs[subtract[sum[sq.row], sum[(Minotaur.location).row]]] = 2)
+      or 
+      (abs[subtract[sum[sq.col], sum[(Minotaur.location).col]]] = 2))
+    }
+  } => {
+    (Minotaur.(location')) in (Minotaur.location).connections.connections
+
+    abs[subtract[sum[(Minotaur.(location')).row], sum[(Theseus.location).row]]] <= abs[subtract[sum[(Minotaur.location).row], sum[(Theseus.location).row]]]
+
+    abs[subtract[sum[(Minotaur.(location')).col], sum[(Theseus.location).col]]] <= abs[subtract[sum[(Minotaur.location).col], sum[(Theseus.location).col]]]
+
+    ((abs[subtract[sum[(Minotaur.(location')).row], sum[(Minotaur.location).row]]] = 2)
+    or 
+    (abs[subtract[sum[(Minotaur.(location')).col], sum[(Minotaur.location).col]]] = 2))
+
+    turn' != turn
+  } else {
+    doNothing
+  }
+
+  // {
+  //   {
+  //     sum[getCoordDist[Minotaur.location.row, Theseus.location.row]] < 0
+  //     some sq: (Minotaur.location).connections.connections | {
+  //       sum[sq.row] = sum[sum[Minotaur.location.row], 2]
+  //     }
+  //   } 
+  //   => 
+  //   {
+  //     sum[(Minotaur.(location')).row] = sum[sum[(Minotaur.(location')).row], 2]
+  //     sum[(Minotaur.(location')).col] = sum[(Minotaur.(location')).col]
+  //     turn' != turn
+  //   }
+    
+  // }
+
+  // // dist is closer in new location
+  // sum[getDist[Minotaur.(location'), Theseus.location]] <= 
+  //   sum[getDist[Minotaur.location, Theseus.location]]
+
+  // // moved 2 horizontally or 2 vertically 
+  // (
+  //   {(abs[sum[(Minotaur.(location')).row] - sum[(Minotaur.location).row]] = 2)
+  //   }
+  //   or 
+  //   (abs[sum[(Minotaur.(location')).col] - sum[(Minotaur.location).col]] = 2)
+  //   or 
+  //   doNothing
+  // )
 }
 
 pred win {
@@ -110,3 +174,8 @@ pred traces {
   init
   always (theseusMove or minotaurMove) or win or lose
 }
+
+run {
+  validMaze
+  init
+  eventually(minotaurMove) } for 16 Square, exactly 5 Int
