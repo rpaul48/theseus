@@ -1,23 +1,23 @@
-const e = React.createElement;
+let StateControls = () => {
+  return <></>;
+};
 
-function main() {
-  const domContainer = div;
-  ReactDOM.render(LikeButton, domContainer);
-}
+let Maze = () => {
+  return <></>;
+};
 
-class LikeButton extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { liked: false };
-  }
+let App = () => {
+  let [currentTrace, setCurrentTrace] = useState(0);
+  return (
+    <>
+      <StateControls
+        currentTrace={currentTrace}
+        setCurrentTrace={setCurrentTrace}
+      />
+      <Maze currentTrace={currentTrace} />{" "}
+    </>
+  );
+};
 
-  render() {
-    if (this.state.liked) {
-      return "You liked this.";
-    }
-
-    return <button onClick={() => this.setState({ liked: true })}>Like</button>;
-  }
-}
-
-main();
+const container = document.querySelector(".script-stage").children[0];
+ReactDOM.render(<App />, container);
