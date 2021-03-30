@@ -1,5 +1,3 @@
-import * as d3 from "d3";
-
 const MAZE_WIDTH = 4;
 const MAZE_HEIGHT = 4;
 
