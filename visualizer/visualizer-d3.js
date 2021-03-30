@@ -5,7 +5,7 @@ const SQUARE_SIZE = "70px";
 const THESEUS_SIZE = "35px";
 const MINOTAUR_SIZE = "30px";
 EXIT_SIZE = "25px";
-const BORDER_STYLE = "2px solid red";
+const BORDER_STYLE = "2px solid black";
 
 /**
  * Function to convert forge integer tuples to javascript integers
@@ -23,10 +23,10 @@ const findWalls = (r, c, mazeLayout) => {
 
   // Array of walls. Directions are [north, east, south, west]
   const walls = [
-    r == 0 || connectedSquares.includes(mazeLayout[r - 1][c]),
-    c == MAZE_WIDTH - 1 || connectedSquares.includes(mazeLayout[r][c + 1]),
-    r == MAZE_HEIGHT - 1 || connectedSquares.includes(mazeLayout[r + 1][c]),
-    c == 0 || connectedSquares.includes(mazeLayout[r][c - 1]),
+    r == 0 || !connectedSquares.includes(mazeLayout[r - 1][c]),
+    c == MAZE_WIDTH - 1 || !connectedSquares.includes(mazeLayout[r][c + 1]),
+    r == MAZE_HEIGHT - 1 || !connectedSquares.includes(mazeLayout[r + 1][c]),
+    c == 0 || !connectedSquares.includes(mazeLayout[r][c - 1]),
   ];
   return walls;
 };
@@ -86,11 +86,11 @@ const draw = (mazeLayout) => {
         .attr("id", `maze-square-${r}${c}`)
         .style("width", SQUARE_SIZE)
         .style("height", SQUARE_SIZE)
-        .style("background-color", "gray")
-        .style("border-top", !walls[0] ? BORDER_STYLE : "")
-        .style("border-right", !walls[1] ? BORDER_STYLE : "")
-        .style("border-bottom", !walls[2] ? BORDER_STYLE : "")
-        .style("border-left", !walls[3] ? BORDER_STYLE : "")
+        .style("background-color", "lightgrey")
+        .style("border-top", walls[0] ? BORDER_STYLE : "")
+        .style("border-right", walls[1] ? BORDER_STYLE : "")
+        .style("border-bottom", walls[2] ? BORDER_STYLE : "")
+        .style("border-left", walls[3] ? BORDER_STYLE : "")
         .text(`${r},${c}`);
 
       // If theseus is at this location, add a dot
