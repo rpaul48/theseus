@@ -52,6 +52,7 @@ const draw = (mazeLayout) => {
   d3.select(div)
     .append("div")
     .text("Green is Theseus. Red is Minotaur. Blue is exit.");
+  d3.select(div).append("div").text(`Current turn: ${Game.turn.id()}`);
 
   // figure out the name (as a string) of the square that theseus, the minotaur, and the exit are at
   const theseusLocationId = Theseus.join(location).tuples()[0].atoms()[0].id();
