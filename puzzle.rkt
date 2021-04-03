@@ -1,6 +1,7 @@
 #lang forge
 
 option problem_type temporal
+option max_tracelength 14
 
 abstract sig Player {
   var location: one Square
@@ -71,8 +72,10 @@ pred validMaze {
 
 pred init{
   -- constrain initial theseus position
-
+  Theseus.location != Exit.position
+  
   -- constrain initial minotaur position
+  Minotaur.location != Theseus.location
 }
 
 pred doNothing {
@@ -80,11 +83,49 @@ pred doNothing {
   turn' != turn
 }
 
+pred moveLeft[p : Player] {
+  p.location.col != sing[0]
+  
+  some sq : Square | {
+    -- Required indices
+    sq.col = sing[subtract[sum[(p.location).col], 1]]
+    sq.row = p.location.row
+
+    -- Must be able to move from current square to the left
+    sq in (p.location).connections
+  }
+  (p.location').col = sing[subtract[sum[p.location.col], 1]]
+  (p.location').row = p.location.row
+  turn' != turn
+}
+
+pred moveRight[p : Player] {
+  p.location.col != sing[3]
+  
+  some sq : Square | {
+    -- Required indices
+    sq.col = sing[add[sum[(p.location).col], 1]]
+    sq.row = p.location.row
+
+    -- Must be able to move from current square to the left
+    sq in (p.location).connections
+  }
+  (p.location').col = sing[add[sum[p.location.col], 1]]
+  (p.location').row = p.location.row
+  turn' != turn
+}
+
+
 pred theseusMove {
   -- preconditions
   Theseus in Game.turn 
 
-  doNothing
+  Minotaur.location = Minotaur.(location')
+
+  -- Don't move to where the minotaur is
+  Theseus.location' != Minotaur.location
+  
+  always (doNothing or moveLeft[Theseus] or moveRight[Theseus])
 
 }
 
@@ -102,31 +143,31 @@ pred minotaurMove {
 
   Theseus.location = Theseus.(location')
 
-  {
-    some sq: (Minotaur.location).connections.connections | {
-      abs[subtract[sum[sq.row], sum[(Theseus.location).row]]] <= abs[subtract[sum[(Minotaur.location).row], sum[(Theseus.location).row]]]
+//   {
+//     some sq: (Minotaur.location).connections.connections | {
+//       abs[subtract[sum[sq.row], sum[(Theseus.location).row]]] <= abs[subtract[sum[(Minotaur.location).row], sum[(Theseus.location).row]]]
 
-      abs[subtract[sum[sq.col], sum[(Theseus.location).col]]] <= abs[subtract[sum[(Minotaur.location).col], sum[(Theseus.location).col]]]
+//       abs[subtract[sum[sq.col], sum[(Theseus.location).col]]] <= abs[subtract[sum[(Minotaur.location).col], sum[(Theseus.location).col]]]
 
-      ((abs[subtract[sum[sq.row], sum[(Minotaur.location).row]]] = 2)
-      or 
-      (abs[subtract[sum[sq.col], sum[(Minotaur.location).col]]] = 2))
-    }
-  } => {
-    (Minotaur.(location')) in (Minotaur.location).connections.connections
+//       ((abs[subtract[sum[sq.row], sum[(Minotaur.location).row]]] = 2)
+//       or 
+//       (abs[subtract[sum[sq.col], sum[(Minotaur.location).col]]] = 2))
+//     }
+//   } => {
+//     (Minotaur.(location')) in (Minotaur.location).connections.connections
 
-    abs[subtract[sum[(Minotaur.(location')).row], sum[(Theseus.location).row]]] <= abs[subtract[sum[(Minotaur.location).row], sum[(Theseus.location).row]]]
+//     abs[subtract[sum[(Minotaur.(location')).row], sum[(Theseus.location).row]]] <= abs[subtract[sum[(Minotaur.location).row], sum[(Theseus.location).row]]]
 
-    abs[subtract[sum[(Minotaur.(location')).col], sum[(Theseus.location).col]]] <= abs[subtract[sum[(Minotaur.location).col], sum[(Theseus.location).col]]]
+//     abs[subtract[sum[(Minotaur.(location')).col], sum[(Theseus.location).col]]] <= abs[subtract[sum[(Minotaur.location).col], sum[(Theseus.location).col]]]
 
-    ((abs[subtract[sum[(Minotaur.(location')).row], sum[(Minotaur.location).row]]] = 2)
-    or 
-    (abs[subtract[sum[(Minotaur.(location')).col], sum[(Minotaur.location).col]]] = 2))
+//     ((abs[subtract[sum[(Minotaur.(location')).row], sum[(Minotaur.location).row]]] = 2)
+//     or 
+//     (abs[subtract[sum[(Minotaur.(location')).col], sum[(Minotaur.location).col]]] = 2))
 
-    turn' != turn
-  } else {
-    doNothing
-  }
+//     turn' != turn
+//   } else {
+//    doNothing
+//  }
 
   // {
   //   {
@@ -157,6 +198,7 @@ pred minotaurMove {
   //   or 
   //   doNothing
   // )
+  doNothing
 }
 
 pred win {
@@ -176,6 +218,8 @@ pred traces {
 }
 
 run {
-  validMaze
+  validMaze 
   init
-  eventually(minotaurMove) } for 16 Square, exactly 5 Int
+  theseusMove
+  eventually (win)
+} for 16 Square, exactly 5 Int
