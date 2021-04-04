@@ -107,11 +107,43 @@ pred moveRight[p : Player] {
     sq.col = sing[add[sum[(p.location).col], 1]]
     sq.row = p.location.row
 
-    -- Must be able to move from current square to the left
+    -- Must be able to move from current square to the right
     sq in (p.location).connections
   }
   (p.location').col = sing[add[sum[p.location.col], 1]]
   (p.location').row = p.location.row
+  turn' != turn
+}
+
+pred moveDown[p : Player] {
+  p.location.row != sing[3]
+  
+  some sq : Square | {
+    -- Required indices
+    sq.row = sing[add[sum[(p.location).row], 1]]
+    sq.col = p.location.col
+
+    -- Must be able to move from current square to below
+    sq in (p.location).connections
+  }
+  (p.location').row = sing[add[sum[p.location.row], 1]]
+  (p.location').col = p.location.col
+  turn' != turn
+}
+
+pred moveUp[p : Player] {
+  p.location.row != sing[0]
+  
+  some sq : Square | {
+    -- Required indices
+    sq.row = sing[subtract[sum[(p.location).row], 1]]
+    sq.col = p.location.col
+
+    -- Must be able to move from current square to above
+    sq in (p.location).connections
+  }
+  (p.location').row = sing[subtract[sum[p.location.row], 1]]
+  (p.location').col = p.location.col
   turn' != turn
 }
 
@@ -124,7 +156,7 @@ pred theseusMove {
 
   -- Don't move to where the minotaur is
   Theseus.location' != Minotaur.location
-  
+
   always (doNothing or moveLeft[Theseus] or moveRight[Theseus])
 
 }
