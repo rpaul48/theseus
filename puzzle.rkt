@@ -184,43 +184,13 @@ pred closerToTheseus[start: Square, end: Square] {
 pred minotaurMove {
   -- Theseus doesn't move
   Theseus.location = Theseus.(location')
-
-  // approach 1: if there is a sq 2 away that is closer to theseus take it. else if there is a sq 1 away that is closer then take it. 
-  // else nth
-  // pros: simple to write, easy to understand
-  // cons: not sure if completely correct. also, doesn't take into account that the minotaur goes horizontal before vertical. also really slow
-  // { 
-  //   some sq: (Minotaur.location).connections.connections | { closerToTheseus[Minotaur.location, sq] }
-  // } => {
-  //   (Minotaur.(location')) in (Minotaur.location).connections.connections
-  //   closerToTheseus[Minotaur.location, Minotaur.(location')]
- 
-  // } else {
-    { 
-      some sq: (Minotaur.location).connections | { closerToTheseus[Minotaur.location, sq] }
-    } => {
-      (Minotaur.(location')) in (Minotaur.location).connections
-      closerToTheseus[Minotaur.location, Minotaur.(location')]
-    } else {
-      doNothing
-    }
-  // }
-
-  // approach 2: calculate if theseus is left/right, then go that direction (if no wall). 
-  // else calculate if theseus is up/down, then go that direction. else nth
-  // pros: takes into account horizontal mvmt before vertical
-  // cons: seems like a LOT of nested implies. also idk how to do 2 moves in diff directions
-
-  // approach 3: minotaur takes 2 transitions to move. this would require turn to be able to take on 3 states 
-  // (minotaur1, minotaur2, theseus) need to restructure code if that is the case. 
-  // Then we treat the 2 moves separately and similar to approach 2 
-  // pros: takes into account horizontal mvmt before vertical. seems simple-ish and doable
-  // cons: still a lot of nested implies. also need to restructure code for 2 minotaur move states
-
-  // overall... which one would be the fastest? do we care about moving horizontally before vertically? 
-
-  -- Dummy code for minotaurMove
-  // Minotaur.location' in (Minotaur.location).connections
+  
+  { some sq: (Minotaur.location).connections | { closerToTheseus[Minotaur.location, sq] }} => {
+    (Minotaur.(location')) in (Minotaur.location).connections
+    closerToTheseus[Minotaur.location, Minotaur.(location')]
+  } else {
+    doNothing
+  }
 }
 
 pred win {
