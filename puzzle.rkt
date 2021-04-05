@@ -206,7 +206,7 @@ pred minotaurMove {
   // pros: takes into account horizontal mvmt before vertical
   // cons: seems like a LOT of nested implies. also idk how to do 2 moves in diff directions
 
-  // approach 3: minotaur takes 2 transitions to move. this would require turn to be able to take on 2 states 
+  // approach 3: minotaur takes 2 transitions to move. this would require turn to be able to take on 3 states 
   // (minotaur1, minotaur2, theseus) need to restructure code if that is the case. 
   // Then we treat the 2 moves separately and similar to approach 2 
   // pros: takes into account horizontal mvmt before vertical. seems simple-ish and doable
