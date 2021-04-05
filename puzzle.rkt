@@ -11,8 +11,15 @@ one sig Theseus extends Player {}
 one sig Minotaur extends Player {}
 
 one sig Game { 
-  var turn: one Player 
+  var turn: one PossibleTurn
 }
+
+abstract sig PossibleTurn {
+  next: one PossibleTurn
+}
+one sig MinotaurTurn1 extends PossibleTurn {}
+one sig MinotaurTurn2 extends PossibleTurn {}
+one sig TheseusTurn extends PossibleTurn {}
 
 sig Square {
   row: one Int,
@@ -47,7 +54,10 @@ pred validConnections {
   -- no sq: Square | #sq.connections = 3
 }
 
-pred validMaze {
+pred validGame {
+  -- Setup turn order
+  next = MinotaurTurn1->MinotaurTurn2 + MinotaurTurn2->TheseusTurn + TheseusTurn->MinotaurTurn1
+
   -- 0-3 rows/columns
   all sq: Square | {
     sum[sq.row] >= 0 and sum[sq.row] < 4
@@ -68,7 +78,7 @@ pred validMaze {
   validConnections
 }
 
-// run validMaze for 16 Square, exactly 5 Int
+// run validGame for 16 Square, exactly 5 Int
 
 pred init{
   -- constrain initial theseus position
@@ -78,12 +88,11 @@ pred init{
   Minotaur.location != Theseus.location
 
   -- theseus moves first
-  Game.turn = Theseus
+  Game.turn = TheseusTurn
 }
 
 pred doNothing {
   location' = location
-  turn' != turn
 }
 
 pred moveLeft[p : Player] {
@@ -99,7 +108,6 @@ pred moveLeft[p : Player] {
   }
   (p.location').col = sing[subtract[sum[p.location.col], 1]]
   (p.location').row = p.location.row
-  turn' != turn
 }
 
 pred moveRight[p : Player] {
@@ -115,7 +123,6 @@ pred moveRight[p : Player] {
   }
   (p.location').col = sing[add[sum[p.location.col], 1]]
   (p.location').row = p.location.row
-  turn' != turn
 }
 
 pred moveDown[p : Player] {
@@ -131,7 +138,6 @@ pred moveDown[p : Player] {
   }
   (p.location').row = sing[add[sum[p.location.row], 1]]
   (p.location').col = p.location.col
-  turn' != turn
 }
 
 pred moveUp[p : Player] {
@@ -147,7 +153,6 @@ pred moveUp[p : Player] {
   }
   (p.location').row = sing[subtract[sum[p.location.row], 1]]
   (p.location').col = p.location.col
-  turn' != turn
 }
 
 
@@ -180,10 +185,10 @@ pred minotaurMove {
   -- Theseus doesn't move
   Theseus.location = Theseus.(location')
 
-  // // approach 1: if there is a sq 2 away that is closer to theseus take it. else if there is a sq 1 away that is closer then take it. 
-  // // else nth
-  // // pros: simple to write, easy to understand
-  // // cons: not sure if completely correct. also, doesn't take into account that the minotaur goes horizontal before vertical. also really slow
+  // approach 1: if there is a sq 2 away that is closer to theseus take it. else if there is a sq 1 away that is closer then take it. 
+  // else nth
+  // pros: simple to write, easy to understand
+  // cons: not sure if completely correct. also, doesn't take into account that the minotaur goes horizontal before vertical. also really slow
   // { 
   //   some sq: (Minotaur.location).connections.connections | { closerToTheseus[Minotaur.location, sq] }
   // } => {
@@ -191,14 +196,14 @@ pred minotaurMove {
   //   closerToTheseus[Minotaur.location, Minotaur.(location')]
  
   // } else {
-  //   { 
-  //     some sq: (Minotaur.location).connections | { closerToTheseus[Minotaur.location, sq] }
-  //   } => {
-  //     (Minotaur.(location')) in (Minotaur.location).connections
-  //     closerToTheseus[Minotaur.location, Minotaur.(location')]
-  //   } else {
-  //     doNothing
-  //   }
+    { 
+      some sq: (Minotaur.location).connections | { closerToTheseus[Minotaur.location, sq] }
+    } => {
+      (Minotaur.(location')) in (Minotaur.location).connections
+      closerToTheseus[Minotaur.location, Minotaur.(location')]
+    } else {
+      doNothing
+    }
   // }
 
   // approach 2: calculate if theseus is left/right, then go that direction (if no wall). 
@@ -215,7 +220,7 @@ pred minotaurMove {
   // overall... which one would be the fastest? do we care about moving horizontally before vertically? 
 
   -- Dummy code for minotaurMove
-  Minotaur.location' in (Minotaur.location).connections
+  // Minotaur.location' in (Minotaur.location).connections
 }
 
 pred win {
@@ -227,32 +232,50 @@ pred lose {
 }
 
 pred traces {
-  validMaze
+  validGame
   init
   
   -- Regulate who can move at each turn
-  always (Game.turn = Theseus => {
-    theseusMove or doNothing
-  } else {
-    minotaurMove or doNothing
-  })
+  always {
+    Game.turn = TheseusTurn => {
+      theseusMove or doNothing
+    } else {
+      minotaurMove
+    }
+  }
 
   -- Turn must always change
-  always (turn' != turn)
+  always (Game.turn' = (Game.turn).next)
 
   -- Game stops when we win or lose
   always ((win => always doNothing) and (lose => always doNothing))
 }
 
 // run {
-//   validMaze 
+//   validGame 
 //   init
 //   theseusMove
 //   eventually (win)
 // } for 16 Square, exactly 5 Int
 
-run {
+pred tracesWithWin {
   traces
-  eventually (lose)
+  eventually win
+}
+
+pred tracesWithLose {
+  traces
+  eventually lose
+}
+
+pred interesting {
+  -- Ensure that theseus starts at least 2 from the exist
+  sum[getDist[Theseus.location, Exit.position]] > 2
+
+}
+
+run {
+  tracesWithWin
+  interesting
   //eventually(some sq: (Minotaur.location).connections.connections | { closerToTheseus[Minotaur.location, sq] })
-} for 16 Square, exactly 5 Int
+} for 16 Square, exactly 5 Int, exactly 3 PossibleTurn
