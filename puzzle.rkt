@@ -76,6 +76,9 @@ pred init{
   
   -- constrain initial minotaur position
   Minotaur.location != Theseus.location
+
+  -- theseus moves first
+  Game.turn = Theseus
 }
 
 pred doNothing {
