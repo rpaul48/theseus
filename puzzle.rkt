@@ -149,16 +149,16 @@ pred moveUp[p : Player] {
 
 
 pred theseusMove {
-  -- preconditions
-  Theseus in Game.turn 
-
+  -- Minotaur doesn't move
   Minotaur.location = Minotaur.(location')
 
   -- Don't move to where the minotaur is
   Theseus.location' != Minotaur.location
 
-  always (doNothing or moveLeft[Theseus] or moveRight[Theseus] or moveUp[Theseus] or moveDown[Theseus])
+  -- If Theseus can go to the exit, go to the exit
+  Exit.position in (Theseus.location).connections => {Theseus.location' = Exit.position}
 
+  Theseus.location' in (Theseus.location).connections
 }
 
 // fun getDist[s1: Square, s2: Square]: Int {
@@ -170,9 +170,7 @@ pred theseusMove {
 // }
 
 pred minotaurMove {
-  -- preconditions
-  Minotaur in Game.turn
-
+  -- Theseus doesn't move
   Theseus.location = Theseus.(location')
 
 //   {
@@ -230,28 +228,36 @@ pred minotaurMove {
   //   or 
   //   doNothing
   // )
-  doNothing
+  Minotaur.location' in Minotaur.location.connections
 }
 
 pred win {
   Theseus.location in Exit.position
-  always doNothing
 }
 
 pred lose {
   Minotaur.location in Theseus.location
-  always doNothing
 }
 
 pred traces {
   validMaze
   init
-  always (theseusMove or minotaurMove) or win or lose
+  
+  -- Regulate who can move at each turn
+  always (Game.turn = Theseus => {
+    theseusMove or doNothing
+  } else {
+    minotaurMove or doNothing
+  })
+
+  -- Turn must always change
+  always (turn' != turn)
+
+  -- Game stops when we win or lose
+  always ((win => always doNothing) and (lose => always doNothing))
 }
 
 run {
-  validMaze 
-  init
-  theseusMove
-  eventually (win)
+  traces
+  eventually (lose)
 } for 16 Square, exactly 5 Int
