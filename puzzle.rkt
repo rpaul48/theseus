@@ -157,7 +157,7 @@ pred theseusMove {
   -- Don't move to where the minotaur is
   Theseus.location' != Minotaur.location
 
-  always (doNothing or moveLeft[Theseus] or moveRight[Theseus])
+  always (doNothing or moveLeft[Theseus] or moveRight[Theseus] or moveUp[Theseus] or moveDown[Theseus])
 
 }
 
