@@ -76,6 +76,9 @@ pred init{
   
   -- constrain initial minotaur position
   Minotaur.location != Theseus.location
+
+  -- theseus moves first
+  Game.turn = Theseus
 }
 
 pred doNothing {
@@ -161,74 +164,58 @@ pred theseusMove {
   Theseus.location' in (Theseus.location).connections
 }
 
-// fun getDist[s1: Square, s2: Square]: Int {
-//   sing[abs[sum[s1.row] - sum[s2.row]] + abs[sum[s1.col] - sum[s2.col]]]
-// }
+fun getDist[s1: Square, s2: Square]: Int {
+  sing[add[abs[subtract[sum[s1.row], sum[s2.row]]], abs[subtract[sum[s1.col], sum[s2.col]]]]]
+}
 
 // fun getCoordDist[x1: Int, x2: Int]: Int {
 //   sing[abs[sum[x1.row] - sum[x2.row]]]
 // }
 
+pred closerToTheseus[start: Square, end: Square] {
+  sum[getDist[start, Theseus.location]] > sum[getDist[end, Theseus.location]]
+}
+
 pred minotaurMove {
   -- Theseus doesn't move
   Theseus.location = Theseus.(location')
 
-//   {
-//     some sq: (Minotaur.location).connections.connections | {
-//       abs[subtract[sum[sq.row], sum[(Theseus.location).row]]] <= abs[subtract[sum[(Minotaur.location).row], sum[(Theseus.location).row]]]
-
-//       abs[subtract[sum[sq.col], sum[(Theseus.location).col]]] <= abs[subtract[sum[(Minotaur.location).col], sum[(Theseus.location).col]]]
-
-//       ((abs[subtract[sum[sq.row], sum[(Minotaur.location).row]]] = 2)
-//       or 
-//       (abs[subtract[sum[sq.col], sum[(Minotaur.location).col]]] = 2))
-//     }
-//   } => {
-//     (Minotaur.(location')) in (Minotaur.location).connections.connections
-
-//     abs[subtract[sum[(Minotaur.(location')).row], sum[(Theseus.location).row]]] <= abs[subtract[sum[(Minotaur.location).row], sum[(Theseus.location).row]]]
-
-//     abs[subtract[sum[(Minotaur.(location')).col], sum[(Theseus.location).col]]] <= abs[subtract[sum[(Minotaur.location).col], sum[(Theseus.location).col]]]
-
-//     ((abs[subtract[sum[(Minotaur.(location')).row], sum[(Minotaur.location).row]]] = 2)
-//     or 
-//     (abs[subtract[sum[(Minotaur.(location')).col], sum[(Minotaur.location).col]]] = 2))
-
-//     turn' != turn
-//   } else {
-//    doNothing
-//  }
-
-  // {
-  //   {
-  //     sum[getCoordDist[Minotaur.location.row, Theseus.location.row]] < 0
-  //     some sq: (Minotaur.location).connections.connections | {
-  //       sum[sq.row] = sum[sum[Minotaur.location.row], 2]
-  //     }
-  //   } 
-  //   => 
-  //   {
-  //     sum[(Minotaur.(location')).row] = sum[sum[(Minotaur.(location')).row], 2]
-  //     sum[(Minotaur.(location')).col] = sum[(Minotaur.(location')).col]
-  //     turn' != turn
+  // // approach 1: if there is a sq 2 away that is closer to theseus take it. else if there is a sq 1 away that is closer then take it. 
+  // // else nth
+  // // pros: simple to write, easy to understand
+  // // cons: not sure if completely correct. also, doesn't take into account that the minotaur goes horizontal before vertical. also really slow
+  // { 
+  //   some sq: (Minotaur.location).connections.connections | { closerToTheseus[Minotaur.location, sq] }
+  // } => {
+  //   (Minotaur.(location')) in (Minotaur.location).connections.connections
+  //   closerToTheseus[Minotaur.location, Minotaur.(location')]
+ 
+  // } else {
+  //   { 
+  //     some sq: (Minotaur.location).connections | { closerToTheseus[Minotaur.location, sq] }
+  //   } => {
+  //     (Minotaur.(location')) in (Minotaur.location).connections
+  //     closerToTheseus[Minotaur.location, Minotaur.(location')]
+  //   } else {
+  //     doNothing
   //   }
-    
   // }
 
-  // // dist is closer in new location
-  // sum[getDist[Minotaur.(location'), Theseus.location]] <= 
-  //   sum[getDist[Minotaur.location, Theseus.location]]
+  // approach 2: calculate if theseus is left/right, then go that direction (if no wall). 
+  // else calculate if theseus is up/down, then go that direction. else nth
+  // pros: takes into account horizontal mvmt before vertical
+  // cons: seems like a LOT of nested implies. also idk how to do 2 moves in diff directions
 
-  // // moved 2 horizontally or 2 vertically 
-  // (
-  //   {(abs[sum[(Minotaur.(location')).row] - sum[(Minotaur.location).row]] = 2)
-  //   }
-  //   or 
-  //   (abs[sum[(Minotaur.(location')).col] - sum[(Minotaur.location).col]] = 2)
-  //   or 
-  //   doNothing
-  // )
-  Minotaur.location' in Minotaur.location.connections
+  // approach 3: minotaur takes 2 transitions to move. this would require turn to be able to take on 3 states 
+  // (minotaur1, minotaur2, theseus) need to restructure code if that is the case. 
+  // Then we treat the 2 moves separately and similar to approach 2 
+  // pros: takes into account horizontal mvmt before vertical. seems simple-ish and doable
+  // cons: still a lot of nested implies. also need to restructure code for 2 minotaur move states
+
+  // overall... which one would be the fastest? do we care about moving horizontally before vertically? 
+
+  -- Dummy code for minotaurMove
+  Minotaur.location' in (Minotaur.location).connections
 }
 
 pred win {
@@ -257,7 +244,15 @@ pred traces {
   always ((win => always doNothing) and (lose => always doNothing))
 }
 
+// run {
+//   validMaze 
+//   init
+//   theseusMove
+//   eventually (win)
+// } for 16 Square, exactly 5 Int
+
 run {
   traces
   eventually (lose)
+  //eventually(some sq: (Minotaur.location).connections.connections | { closerToTheseus[Minotaur.location, sq] })
 } for 16 Square, exactly 5 Int
