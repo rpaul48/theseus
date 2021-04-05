@@ -173,10 +173,6 @@ fun getDist[s1: Square, s2: Square]: Int {
   sing[add[abs[subtract[sum[s1.row], sum[s2.row]]], abs[subtract[sum[s1.col], sum[s2.col]]]]]
 }
 
-// fun getCoordDist[x1: Int, x2: Int]: Int {
-//   sing[abs[sum[x1.row] - sum[x2.row]]]
-// }
-
 pred closerToTheseus[start: Square, end: Square] {
   sum[getDist[start, Theseus.location]] > sum[getDist[end, Theseus.location]]
 }
@@ -247,5 +243,4 @@ pred interesting {
 run {
   tracesWithWin
   interesting
-  //eventually(some sq: (Minotaur.location).connections.connections | { closerToTheseus[Minotaur.location, sq] })
 } for 16 Square, exactly 5 Int, exactly 3 PossibleTurn
