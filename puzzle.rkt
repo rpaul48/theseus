@@ -240,7 +240,71 @@ pred interesting {
 
 }
 
-run {
-  tracesWithWin
-  interesting
-} for 16 Square, exactly 5 Int, exactly 3 PossibleTurn
+// run {
+//   tracesWithWin
+//   interesting
+// } for 16 Square, exactly 5 Int, exactly 3 PossibleTurn
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--================================== TESTS ==================================--
+
+--============================= validConnections =============================--
+
+--================================ validGame ================================--
+inst validGameExample {
+  Theseus = Theseus0
+  Minotaur = Minotaur0
+
+  Game = Game0
+  Exit = Exit0
+  Player = Minotaur0 + Theseus0
+
+  TheseusTurn = TheseusTurn0
+  MinotaurTurn1 = MinotaurTurn10
+  MinotaurTurn2 = MinotaurTurn20
+  PossibleTurn = MinotaurTurn10 + MinotaurTurn20 + TheseusTurn0
+  next = MinotaurTurn10->MinotaurTurn20 + MinotaurTurn20->TheseusTurn0 
+  + TheseusTurn0->MinotaurTurn10
+
+  location = Theseus0->Square15 + Minotaur0->Square11
+  position = Exit0->Square2
+  turn = Game0->MinotaurTurn20
+
+  Square = Square0 + Square1 + Square2 + Square3 + Square4 + Square5 + Square6 
+  + Square7 + Square8 + Square9 + Square10 + Square11 + Square12 + Square13 
+  + Square14 + Square15
+
+  row = Square0->2 + Square1->1 + Square2->3 + Square3->0 + Square4->3 
+  + Square5->2 + Square6->1 + Square7->0 + Square8->0 + Square9->3 
+  + Square10->2 + Square11->1 + Square12->3 + Square13->2 + Square14->0 + Square15->1
+
+  col = Square0->3 + Square1->3 + Square2->3 + Square3->3 + Square4->2 
+  + Square5->2 + Square6->2 + Square7->2 + Square8->1 + Square9->1 
+  + Square10->1 + Square11->1 + Square12->0 + Square13->0 + Square14->0 + Square15->0
+  
+  connections = Square0->Square1 + Square1->Square0 + Square1->Square6 
+  + Square2->Square4 + Square3->Square7 + Square4->Square2 + Square4->Square5 
+  + Square4->Square9 + Square5->Square4 + Square5->Square6 + Square5->Square10 
+  + Square6->Square1 + Square6->Square5 + Square6->Square7 + Square7->Square3 
+  + Square7->Square6 + Square7->Square8 + Square8->Square7 + Square8->Square11 
+  + Square8->Square14 + Square9->Square4 + Square9->Square10 + Square9->Square12 
+  + Square10->Square5 + Square10->Square9 + Square11->Square8 + Square11->Square15 
+  + Square12->Square9 + Square12->Square13 + Square13->Square12 + Square14->Square8 
+  + Square15->Square11
+}
+
+test expect {
+    validGameExampleTest: { validGame } for 16 Square, exactly 5 Int for validGameExample is sat 
+}
