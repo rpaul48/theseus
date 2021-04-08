@@ -179,12 +179,25 @@ pred minotaurMove {
   -- Theseus doesn't move
   Theseus.location = Theseus.(location')
   
-  { some sq: (Minotaur.location).connections | { closerToTheseus[Minotaur.location, sq] }} => {
+  { some sq: (Minotaur.location).connections | { 
+    closerToTheseus[Minotaur.location, sq] 
+    sq.row = (Minotaur.location).row
+  }} => {
+    (Minotaur.(location')).row = (Minotaur.location).row
     (Minotaur.(location')) in (Minotaur.location).connections
     closerToTheseus[Minotaur.location, Minotaur.(location')]
   } else {
-    doNothing
+    { some sq: (Minotaur.location).connections | { 
+      closerToTheseus[Minotaur.location, sq] 
+    }} => {
+      (Minotaur.(location')) in (Minotaur.location).connections
+      closerToTheseus[Minotaur.location, Minotaur.(location')]
+    } else {
+      doNothing
+    } 
   }
+
+
 }
 
 pred win {
@@ -234,14 +247,14 @@ pred tracesWithLose {
 
 pred interesting {
   -- Ensure that theseus starts at least 2 from the exist
-  sum[getDist[Theseus.location, Exit.position]] > 2
+  sum[getDist[Theseus.location, Exit.position]] > 3
 
 }
 
-// run {
-//   tracesWithWin
-//   interesting
-// } for 16 Square, exactly 5 Int, exactly 3 PossibleTurn
+run {
+  tracesWithWin
+  interesting
+} for 16 Square, exactly 5 Int, exactly 3 PossibleTurn
 
 
 
