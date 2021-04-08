@@ -19,12 +19,32 @@ const DO_DRAW_THESEUS_DISTANCE = true;
  */
 const forgeIntToJsInt = (forgeInt) => forgeInt.atoms()[0].id();
 
+/**
+ * Computer the manhattan distance between two coords
+ * @param {number} r1 row of first square
+ * @param {number} c1 col of first square
+ * @param {number} r2 row of second square
+ * @param {number} c2 col of second square
+ * @returns (number) the taxicab distance between the two squares
+ */
 const manhattanDistance = (r1, c1, r2, c2) =>
   Math.abs(r1 - r2) + Math.abs(c1 - c2);
 
+/**
+ * Queries the current turn and returns an image url corresponding
+ * to the character whose turn it currently is
+ * @returns the url of the correct image
+ */
 const getImgForCurrentTurn = () =>
   Game.turn.id().substr(0, 8) == "Minotaur" ? MINOTAUR_IMG : THESEUS_IMG;
 
+/**
+ * Computer which walls exist around a given square.
+ * @param {number} r the row
+ * @param {number} c the column
+ * @param {number[][]} mazeLayout two dimensional array to resolve coordinates to Forge atoms
+ * @returns a four element array of 1 or 0 that represents the squares walls
+ */
 const findWalls = (r, c, mazeLayout) => {
   square = mazeLayout[r][c];
   const connectedSquares = square
@@ -42,7 +62,12 @@ const findWalls = (r, c, mazeLayout) => {
   return walls;
 };
 
-const appendImgToDiv = (divSelector, color, imageSrc) => {
+/**
+ * Appends an image tag with the specified image to the specified div
+ * @param {string} divSelector
+ * @param {string} imageSrc
+ */
+const appendImgToDiv = (divSelector, imageSrc) => {
   d3.select(divSelector)
     .append("img")
     .style("position", "absolute")
@@ -53,6 +78,10 @@ const appendImgToDiv = (divSelector, color, imageSrc) => {
     .attr("src", imageSrc);
 };
 
+/**
+ * The main draw function for the visualizer
+ * @param {number[][]} mazeLayout two dimensional array to resolve coordinates to Forge atoms
+ */
 const draw = (mazeLayout) => {
   // Adjust the container so that our visualization is centered
   d3.select(div)
@@ -65,6 +94,9 @@ const draw = (mazeLayout) => {
   drawMaze(mazeLayout);
 };
 
+/**
+ * Draw the interface components of the visualizer
+ */
 const drawInterface = () => {
   const container = d3.select(div).append("div").style("min-width", "300px");
 
@@ -81,6 +113,11 @@ const drawInterface = () => {
     .attr("src", getImgForCurrentTurn())
     .style("height", "40px");
 };
+
+/**
+ * Draw the maze
+ * @param {number[][]} mazeLayout
+ */
 const drawMaze = (mazeLayout) => {
   // figure out the name (as a string) of the square that theseus, the minotaur, and the exit are at
   const theseusLocationId = Theseus.join(location).tuples()[0].atoms()[0].id();
@@ -153,15 +190,15 @@ const drawMaze = (mazeLayout) => {
 
       // if the exit is at this location, add a dot
       if (squareId === exitLocationId) {
-        appendImgToDiv(`#maze-square-${r}${c}`, "blue", EXIT_IMG);
+        appendImgToDiv(`#maze-square-${r}${c}`, EXIT_IMG);
       }
       // If theseus is at this location, add a dot
       if (squareId === theseusLocationId) {
-        appendImgToDiv(`#maze-square-${r}${c}`, "green", THESEUS_IMG);
+        appendImgToDiv(`#maze-square-${r}${c}`, THESEUS_IMG);
       }
       // If the minotaur is at this location, add a dot
       if (squareId === minotaurLocationId) {
-        appendImgToDiv(`#maze-square-${r}${c}`, "red", MINOTAUR_IMG);
+        appendImgToDiv(`#maze-square-${r}${c}`, MINOTAUR_IMG);
       }
     }
   }
@@ -183,4 +220,5 @@ const main = () => {
   d3.select(div).html("");
   draw(mazeLayout);
 };
+
 main();
