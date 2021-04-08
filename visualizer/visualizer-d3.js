@@ -2,10 +2,14 @@ const MAZE_WIDTH = 4;
 const MAZE_HEIGHT = 4;
 
 const SQUARE_SIZE = "70px";
-const THESEUS_SIZE = "35px";
-const MINOTAUR_SIZE = "30px";
-EXIT_SIZE = "25px";
 const BORDER_STYLE = "2px solid black";
+
+const THESEUS_IMG = "https://files.paulbiberstein.me/theseus.png";
+const MINOTAUR_IMG = "https://files.paulbiberstein.me/minotaur.png";
+const EXIT_IMG =
+  "http://www.slate.com/content/dam/slate/archive/2010/03/1_123125_2245632_2246167_2247195_100308_signs_exit_greentn.jpg";
+
+const DO_DRAW_INDICES = false;
 
 /**
  * Function to convert forge integer tuples to javascript integers
@@ -31,14 +35,13 @@ const findWalls = (r, c, mazeLayout) => {
   return walls;
 };
 
-const appendDotToDiv = (divSelector, color, size) => {
+const appendImgToDiv = (divSelector, color, imageSrc) => {
   d3.select(divSelector)
-    .append("div")
+    .append("img")
     .style("position", "absolute")
-    .style("width", size)
-    .style("height", size)
-    .style("background-color", color)
-    .style("border-radius", "100%");
+    .style("height", "50px")
+    .style("width", "auto")
+    .attr("src", imageSrc);
 };
 
 const draw = (mazeLayout) => {
@@ -91,20 +94,22 @@ const draw = (mazeLayout) => {
         .style("border-top", walls[0] ? BORDER_STYLE : "")
         .style("border-right", walls[1] ? BORDER_STYLE : "")
         .style("border-bottom", walls[2] ? BORDER_STYLE : "")
-        .style("border-left", walls[3] ? BORDER_STYLE : "")
-        .text(`${r},${c}`);
-
-      // If theseus is at this location, add a dot
-      if (squareId === theseusLocationId) {
-        appendDotToDiv(`#maze-square-${r}${c}`, "green", THESEUS_SIZE);
-      }
-      // If the minotaur is at this location, add a dot
-      if (squareId === minotaurLocationId) {
-        appendDotToDiv(`#maze-square-${r}${c}`, "red", MINOTAUR_SIZE);
+        .style("border-left", walls[3] ? BORDER_STYLE : "");
+      // Draw square row and column as text
+      if (DO_DRAW_INDICES) {
+        d3.select(`#maze-square-${r}${c}`).text(`${r},${c}`);
       }
       // if the exit is at this location, add a dot
       if (squareId === exitLocationId) {
-        appendDotToDiv(`#maze-square-${r}${c}`, "blue", EXIT_SIZE);
+        appendImgToDiv(`#maze-square-${r}${c}`, "blue", EXIT_IMG);
+      }
+      // If theseus is at this location, add a dot
+      if (squareId === theseusLocationId) {
+        appendImgToDiv(`#maze-square-${r}${c}`, "green", THESEUS_IMG);
+      }
+      // If the minotaur is at this location, add a dot
+      if (squareId === minotaurLocationId) {
+        appendImgToDiv(`#maze-square-${r}${c}`, "red", MINOTAUR_IMG);
       }
     }
   }
