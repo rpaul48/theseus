@@ -246,17 +246,174 @@ pred interesting {
 
 
 
-
-
-
-
-
-
-
-
-
-
 --================================== TESTS ==================================--
+
+--============================== general cases ==============================--
+
+test expect {
+  vacuityTraces: {
+    traces
+  } for 16 Square, exactly 5 Int is sat
+
+  vacuityWin: {
+    tracesWithWin
+  } for 16 Square, exactly 5 Int is sat
+
+  vacuityLose: {
+    tracesWithLose
+  } for 16 Square, exactly 5 Int is sat
+}
+
+inst basicMaze {
+  /*
+  E: Exit
+   _ _ _ _
+  |       |
+  |       |
+  |  _ _  |
+  |_ _ _|E|
+  */
+
+  Square = Square0 + Square1 + Square2 + Square3 + Square4 + Square5 + Square6 
+  + Square7 + Square8 + Square9 + Square10 + Square11 + Square12 + Square13 
+  + Square14 + Square15
+
+  row = Square0->0 + Square1->0 + Square2->0 + Square3->0 + 
+        Square4->1 + Square5->1 + Square6->1 + Square7->1 + 
+        Square8->2 + Square9->2 + Square10->2 + Square11->2 + 
+        Square12->3 + Square13->3 + Square14->3 + Square15->3
+
+  col = Square0->0 + Square1->1 + Square2->2 + Square3->3 + 
+        Square4->0 + Square5->1 + Square6->2 + Square7->3 + 
+        Square8->0 + Square9->1 + Square10->2 + Square11->3 + 
+        Square12->0 + Square13->1 + Square14->2 + Square15->3
+
+  connections = Square0->(Square1 + Square4) + 
+      Square1->(Square0 + Square2 + Square5) + 
+      Square2->(Square1 + Square6 + Square3) + 
+      Square3->(Square2 + Square7) + 
+      Square4->(Square0 + Square5 + Square8) + 
+      Square5->(Square1 + Square4 + Square6 + Square9) + 
+      Square6->(Square2 + Square5 + Square7 + Square10) +
+      Square7->(Square3 + Square6 + Square11) + 
+      Square8->(Square4 + Square9 + Square12) + 
+      Square9->(Square5 + Square8 + Square10) + 
+      Square10->(Square6 + Square9 + Square11) +
+      Square11->(Square7 + Square10 + Square15) + 
+      Square12->(Square13 + Square8) + 
+      Square13->(Square12 + Square14) +
+      Square14->(Square13) +
+      Square15->(Square11)
+
+  Theseus = Theseus0
+  Minotaur = Minotaur0
+
+  Game = Game0
+  Exit = Exit0
+  Player = Minotaur0 + Theseus0
+
+}
+
+
+test expect {
+  /*
+  E: Exit
+  M: Minotaur
+  T: Theseus
+   _ _ _ _
+  |       |
+  |    T  |
+  |  _ _  |
+  |_ _ M|E|
+  */
+  canWinTest: {
+    tracesWithWin
+    sum[Theseus.location.row] = 1
+    sum[Theseus.location.col] = 2
+    sum[Minotaur.location.row] = 3
+    sum[Minotaur.location.col] = 2
+  } for 16 Square, exactly 5 Int for basicMaze is sat 
+
+  /*
+  E: Exit
+  M: Minotaur
+  T: Theseus
+   _ _ _ _
+  |       |
+  |    M  |
+  |  _ _  |
+  |_ _ T|E|
+
+  */
+  mustLoseTest1: {
+    tracesWithWin
+    sum[Minotaur.location.row] = 1
+    sum[Minotaur.location.col] = 2
+    sum[Theseus.location.row] = 3
+    sum[Theseus.location.col] = 2
+  } for 16 Square, exactly 5 Int for basicMaze is unsat 
+
+  mustLoseTest2: {
+    tracesWithLose
+    sum[Minotaur.location.row] = 1
+    sum[Minotaur.location.col] = 2
+    sum[Theseus.location.row] = 3
+    sum[Theseus.location.col] = 2
+  } for 16 Square, exactly 5 Int for basicMaze is sat 
+}
+
+
+inst interestingMaze {
+  /*
+  E: Exit
+   _ _ _ _
+  |    _ _|
+  | |     |
+  |_| |_| |
+  |_ _ _ E|
+  */
+
+  Square = Square0 + Square1 + Square2 + Square3 + Square4 + Square5 + 
+      Square6 + Square7 + Square8 + Square9 + Square10 + Square11 + 
+      Square12 + Square13 + Square14 + Square15
+  
+  row = Square0->0 + Square1->1 + Square2->2 + Square3->3 + Square4->1 + 
+      Square5->3 + Square6->2 + Square7->0 + Square8->0 + Square9->1 + 
+      Square10->2 + Square11->3 + Square12->3 + Square13->1 + Square14->0 + 
+      Square15->2
+  col = Square0->3 + Square1->3 + Square2->3 + Square3->3 + Square4->2 + 
+      Square5->2 + Square6->2 + Square7->2 + Square8->1 + Square9->1 + 
+      Square10->1 + Square11->1 + Square12->0 + Square13->0 + Square14->0 + 
+      Square15->0
+
+  connections = Square0->Square7 + Square1->Square2 + Square1->Square4 + 
+      Square2->Square1 + Square2->Square3 + Square3->Square2 + 
+      Square3->Square5 + Square4->Square1 + Square4->Square6 + 
+      Square4->Square9 + Square5->Square3 + Square5->Square11 + 
+      Square6->Square4 + Square7->Square0 + Square7->Square8 + 
+      Square8->Square7 + Square8->Square9 + Square8->Square14 + 
+      Square9->Square4 + Square9->Square8 + Square9->Square10 + 
+      Square10->Square9 + Square10->Square11 + Square11->Square5 + 
+      Square11->Square10 + Square11->Square12 + Square12->Square11 + 
+      Square13->Square14 + Square13->Square15 + Square14->Square8 + 
+      Square14->Square13 + Square15->Square13
+
+  Minotaur = Minotaur0
+  Theseus = Theseus0
+  Game = Game0
+  Player = Minotaur0 + Theseus0
+}
+
+test expect {
+  theseusWinTest: {
+    tracesWithWin
+    sum[Theseus.location.row] = 1
+    sum[Theseus.location.col] = 3
+    sum[Minotaur.location.row] = 1
+    sum[Minotaur.location.col] = 2
+  } for 16 Square, exactly 5 Int for interestingMaze is sat 
+}
+
 
 --============================= validConnections =============================--
 
