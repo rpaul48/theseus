@@ -10,6 +10,7 @@ const EXIT_IMG =
   "http://www.slate.com/content/dam/slate/archive/2010/03/1_123125_2245632_2246167_2247195_100308_signs_exit_greentn.jpg";
 
 const DO_DRAW_INDICES = false;
+const DO_DRAW_THESEUS_DISTANCE = true;
 
 /**
  * Function to convert forge integer tuples to javascript integers
@@ -17,6 +18,9 @@ const DO_DRAW_INDICES = false;
  * @returns integer
  */
 const forgeIntToJsInt = (forgeInt) => forgeInt.atoms()[0].id();
+
+const manhattanDistance = (r1, c1, r2, c2) =>
+  Math.abs(r1 - r2) + Math.abs(c1 - c2);
 
 const findWalls = (r, c, mazeLayout) => {
   square = mazeLayout[r][c];
@@ -39,6 +43,8 @@ const appendImgToDiv = (divSelector, color, imageSrc) => {
   d3.select(divSelector)
     .append("img")
     .style("position", "absolute")
+    .style("bottom", "0px")
+    .style("right", "0px")
     .style("height", "50px")
     .style("width", "auto")
     .attr("src", imageSrc);
@@ -59,6 +65,16 @@ const draw = (mazeLayout) => {
 
   // figure out the name (as a string) of the square that theseus, the minotaur, and the exit are at
   const theseusLocationId = Theseus.join(location).tuples()[0].atoms()[0].id();
+  const theseusRow = Theseus.join(location)
+    .join(row)
+    .tuples()[0]
+    .atoms()[0]
+    .id();
+  const theseusCol = Theseus.join(location)
+    .join(col)
+    .tuples()[0]
+    .atoms()[0]
+    .id();
   const minotaurLocationId = Minotaur.join(location)
     .tuples()[0]
     .atoms()[0]
@@ -88,6 +104,7 @@ const draw = (mazeLayout) => {
       d3.select(`#maze-row-${r}`)
         .append("div")
         .attr("id", `maze-square-${r}${c}`)
+        .style("position", "relative")
         .style("width", SQUARE_SIZE)
         .style("height", SQUARE_SIZE)
         .style("background-color", "lightgrey")
@@ -97,8 +114,21 @@ const draw = (mazeLayout) => {
         .style("border-left", walls[3] ? BORDER_STYLE : "");
       // Draw square row and column as text
       if (DO_DRAW_INDICES) {
-        d3.select(`#maze-square-${r}${c}`).text(`${r},${c}`);
+        d3.select(`#maze-square-${r}${c}`)
+          .append("div")
+          .style("margin", "2px")
+          .text(`${r},${c}`);
       }
+
+      // Draw distance to theseus
+      if (DO_DRAW_THESEUS_DISTANCE) {
+        const dist = manhattanDistance(r, c, theseusRow, theseusCol);
+        d3.select(`#maze-square-${r}${c}`)
+          .append("div")
+          .style("margin", "2px")
+          .text(dist);
+      }
+
       // if the exit is at this location, add a dot
       if (squareId === exitLocationId) {
         appendImgToDiv(`#maze-square-${r}${c}`, "blue", EXIT_IMG);
