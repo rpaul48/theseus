@@ -247,15 +247,74 @@ pred tracesWithLose {
 
 pred interesting {
   -- Ensure that theseus starts at least 2 from the exist
-  sum[getDist[Theseus.location, Exit.position]] > 3
 
+  sum[getDist[Theseus.location, Exit.position]] > 4
 }
 
-run {
-  tracesWithWin
-  interesting
-} for 16 Square, exactly 5 Int, exactly 3 PossibleTurn
+// run {
+//   tracesWithWin
+//   interesting
+// } for 16 Square, exactly 5 Int, exactly 3 PossibleTurn
 
+
+// See video for instance
+inst mazeWithFakeOut {
+  /*
+  Minotaur at column 0 row 2. Theseus at column 2, row 0
+  E: Exit
+   _ _ _ _
+  |    _  |
+  |    _| |
+  |M      |
+  |_ _ _ E|
+  */
+
+  Square = Square0 + Square1 + Square2 + Square3 + Square4 + Square5 + Square6 
+  + Square7 + Square8 + Square9 + Square10 + Square11 + Square12 + Square13 
+  + Square14 + Square15
+
+  row = Square0->0 + Square1->0 + Square2->0 + Square3->0 + 
+        Square4->1 + Square5->1 + Square6->1 + Square7->1 + 
+        Square8->2 + Square9->2 + Square10->2 + Square11->2 + 
+        Square12->3 + Square13->3 + Square14->3 + Square15->3
+
+  col = Square0->0 + Square1->1 + Square2->2 + Square3->3 + 
+        Square4->0 + Square5->1 + Square6->2 + Square7->3 + 
+        Square8->0 + Square9->1 + Square10->2 + Square11->3 + 
+        Square12->0 + Square13->1 + Square14->2 + Square15->3
+
+  connections = Square0->(Square1 + Square4) + 
+      Square1->(Square0 + Square2 + Square5) + 
+      Square2->(Square1 + Square3) + 
+      Square3->(Square2 + Square7) + 
+      Square4->(Square0 + Square5 + Square8) + 
+      Square5->(Square1 + Square4 + Square6 + Square9) + 
+      Square6->(Square5) +
+      Square7->(Square3 + Square11) + 
+      Square8->(Square4 + Square9 + Square12) + 
+      Square9->(Square5 + Square8 + Square10 + Square13) + 
+      Square10->(Square9 + Square11 + Square14) +
+      Square11->(Square7 + Square10 + Square15) + 
+      Square12->(Square13 + Square8) + 
+      Square13->(Square9 + Square12 + Square14) +
+      Square14->(Square10 + Square13 + Square15) +
+      Square15->(Square11 + Square14)
+
+  Theseus = Theseus0
+  Minotaur = Minotaur0
+
+  Game = Game0
+  Exit = Exit0
+  Player = Minotaur0 + Theseus0
+}
+
+// run {
+//   tracesWithWin
+//   sum[Theseus.location.row] = 0
+//   sum[Theseus.location.col] = 2
+//   sum[Minotaur.location.row] = 2
+//   sum[Minotaur.location.col] = 0
+// } for 16 Square, exactly 5 Int for mazeWithFakeOut
 
 
 
