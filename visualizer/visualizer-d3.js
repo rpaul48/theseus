@@ -22,6 +22,9 @@ const forgeIntToJsInt = (forgeInt) => forgeInt.atoms()[0].id();
 const manhattanDistance = (r1, c1, r2, c2) =>
   Math.abs(r1 - r2) + Math.abs(c1 - c2);
 
+const getImgForCurrentTurn = () =>
+  Game.turn.id().substr(0, 8) == "Minotaur" ? MINOTAUR_IMG : THESEUS_IMG;
+
 const findWalls = (r, c, mazeLayout) => {
   square = mazeLayout[r][c];
   const connectedSquares = square
@@ -57,12 +60,28 @@ const draw = (mazeLayout) => {
     .style("flex-direction", "column")
     .style("align-items", "center")
     .style("justify-content", "center");
-  // Add instructions
-  d3.select(div)
-    .append("div")
-    .text("Green is Theseus. Red is Minotaur. Blue is exit.");
-  d3.select(div).append("div").text(`Current turn: ${Game.turn.id()}`);
 
+  drawInterface();
+  drawMaze(mazeLayout);
+};
+
+const drawInterface = () => {
+  const container = d3.select(div).append("div").style("min-width", "300px");
+
+  // Add current turn
+  container
+    .append("div")
+    .attr("id", "current-turn")
+    .style("border", "1px solid black")
+    .style("padding", "3px")
+    .append("h2")
+    .text("Current Turn");
+  d3.select("#current-turn")
+    .append("img")
+    .attr("src", getImgForCurrentTurn())
+    .style("height", "40px");
+};
+const drawMaze = (mazeLayout) => {
   // figure out the name (as a string) of the square that theseus, the minotaur, and the exit are at
   const theseusLocationId = Theseus.join(location).tuples()[0].atoms()[0].id();
   const theseusRow = Theseus.join(location)
@@ -82,7 +101,11 @@ const draw = (mazeLayout) => {
   const exitLocationId = Exit.join(position).tuples()[0].atoms()[0].id();
 
   // Create the container to hold the maze
-  let mazeContainer = d3.select(div).append("div").attr("id", "maze");
+  let mazeContainer = d3
+    .select(div)
+    .append("div")
+    .attr("id", "maze")
+    .style("border", "8px ridge #e1b31e");
 
   // Draw each square
   for (let r = 0; r < mazeLayout.length; r++) {
@@ -100,7 +123,6 @@ const draw = (mazeLayout) => {
       const walls = findWalls(r, c, mazeLayout);
 
       // Create a `div` for this container and style it
-      console.log(`Square at ${squareId}`);
       d3.select(`#maze-row-${r}`)
         .append("div")
         .attr("id", `maze-square-${r}${c}`)
