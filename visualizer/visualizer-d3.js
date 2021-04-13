@@ -1,20 +1,78 @@
-import * as d3 from "d3";
-
 const MAZE_WIDTH = 4;
 const MAZE_HEIGHT = 4;
 
 const SQUARE_SIZE = "70px";
 const BORDER_STYLE = "2px solid black";
 
+const ANIM_DURATION = 500;
+
 const THESEUS_IMG = "https://files.paulbiberstein.me/theseus.png";
 const MINOTAUR_IMG = "https://files.paulbiberstein.me/minotaur.png";
 const EXIT_IMG =
   "http://www.slate.com/content/dam/slate/archive/2010/03/1_123125_2245632_2246167_2247195_100308_signs_exit_greentn.jpg";
+const DENY_IMG =
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/ProhibitionSign2.svg/1200px-ProhibitionSign2.svg.png";
 
 let DO_DRAW_INDICES = false;
 let DO_DRAW_THESEUS_DISTANCE = false;
 
-const SELECTED_INSTANCE = 0;
+/**
+ * This function wraps all relation accesses behind a function so we can manually control the selected instance
+ * @param {string} relName
+ */
+const getRelation = (relName, instance_index) => {
+  // If an instance isn't supplied then use the current index
+  if (instance_index === undefined) {
+    instance_index = SELECTED_INSTANCE;
+  }
+  if (
+    ![
+      "position",
+      "row",
+      "location",
+      "turn",
+      "next",
+      "connections",
+      "col",
+    ].includes(relName)
+  ) {
+    console.error("Tried to get non-existent relation");
+  }
+  return instances[instance_index].field(relName);
+};
+
+/**
+ * This function wraps all sig accesses behind a function so we can manually control the selected instance
+ * @param {string} sigName
+ */
+const getSig = (sigName, instance_index) => {
+  // If an instance isn't supplied then use the current index
+  if (instance_index === undefined) {
+    instance_index = SELECTED_INSTANCE;
+  }
+  if (
+    ![
+      "Int",
+      "univ",
+      "Player",
+      "Minotaur",
+      "PossibleTurn",
+      "MinotaurTurn1",
+      "Theseus",
+      "Exit",
+      "MinotaurTurn2",
+      "TheseusTurn",
+      "Game",
+      "Square",
+    ].includes(sigName)
+  ) {
+    console.error("Tried to get non-existent sig");
+  }
+  return instances[instance_index].signature(sigName);
+};
+
+// Manually track the selected instance
+let SELECTED_INSTANCE = 0;
 
 /**
  * Function to convert forge integer tuples to javascript integers
@@ -34,18 +92,31 @@ const forgeIntToJsInt = (forgeInt) => forgeInt.atoms()[0].id();
 const manhattanDistance = (r1, c1, r2, c2) =>
   Math.abs(r1 - r2) + Math.abs(c1 - c2);
 
-const getRowAndCol = (square) => [
-  square.join(row).tuples()[0].atoms()[0].id(),
-  square.join(col).tuples()[0].atoms()[0].id(),
-];
+const getRowAndCol = (square, inst) => {
+  if (inst === undefined) {
+    inst = SELECTED_INSTANCE;
+  }
+  return [
+    square.join(getRelation("row", inst)).tuples()[0].atoms()[0].id(),
+    square.join(getRelation("col", inst)).tuples()[0].atoms()[0].id(),
+  ];
+};
 
 /**
  * Queries the current turn and returns an image url corresponding
  * to the character whose turn it currently is
  * @returns the url of the correct image
  */
-const getImgForCurrentTurn = () =>
-  Game.turn.id().substr(0, 8) == "Minotaur" ? MINOTAUR_IMG : THESEUS_IMG;
+const getImgForCurrentTurn = () => {
+  return getSig("Game")
+    .join(getRelation("turn"))
+    .tuples()[0]
+    .atoms()[0]
+    .id()
+    .substr(0, 8) == "Minotaur"
+    ? MINOTAUR_IMG
+    : THESEUS_IMG;
+};
 
 /**
  * Computer which walls exist around a given square.
@@ -57,7 +128,7 @@ const getImgForCurrentTurn = () =>
 const findWalls = (r, c, mazeLayout) => {
   square = mazeLayout[r][c];
   const connectedSquares = square
-    .join(connections)
+    .join(getRelation("connections"))
     .tuples()
     .map((x) => x.atoms()[0]);
 
@@ -76,15 +147,112 @@ const findWalls = (r, c, mazeLayout) => {
  * @param {string} divSelector
  * @param {string} imageSrc
  */
-const appendImgToDiv = (divSelector, imageSrc) => {
+const appendImgToDiv = (divSelector, imageSrc, id) => {
   d3.select(divSelector)
     .append("img")
+    .attr("id", id)
     .style("position", "absolute")
     .style("bottom", "0px")
     .style("right", "0px")
     .style("height", "50px")
     .style("width", "auto")
+    .style("z-index", id === "exit-img" ? "9" : "10")
     .attr("src", imageSrc);
+};
+
+const getMazeLayout = () => {
+  // Make a 2d array that will have MAZE_WIDTH cols and MAZE_HEIGHT rows
+  let mazeLayout = [];
+  for (let i = 0; i < MAZE_HEIGHT; i++) {
+    mazeLayout.push(Array(MAZE_WIDTH));
+  }
+  for (const square of getSig("Square").atoms()) {
+    let r = forgeIntToJsInt(square.join(getRelation("row")).tuples()[0]);
+    let c = forgeIntToJsInt(square.join(getRelation("col")).tuples()[0]);
+    mazeLayout[r][c] = square;
+  }
+
+  return mazeLayout;
+};
+
+const nextInstance = () => {
+  if (SELECTED_INSTANCE === instances.length - 1) {
+    return;
+  }
+
+  let [sigName, selector] =
+    getSig("Game")
+      .join(getRelation("turn"))
+      .tuples()[0]
+      .atoms()[0]
+      .id()
+      .substr(0, 8) == "Minotaur"
+      ? ["Minotaur", "#minotaur-img"]
+      : ["Theseus", "#theseus-img"];
+
+  let [currentRow, currentCol] = getRowAndCol(
+    getSig(sigName).join(getRelation("location"))
+  );
+
+  let [nextRow, nextCol] = getRowAndCol(
+    getSig(sigName, SELECTED_INSTANCE + 1).join(
+      getRelation("location", SELECTED_INSTANCE + 1)
+    ),
+    SELECTED_INSTANCE + 1
+  );
+
+  // The square size in pixels as an integer
+  let square_size_px = parseInt(SQUARE_SIZE.substr(0, SQUARE_SIZE.length - 2));
+  // The location change of the characer in pixels
+  let [xDelta, yDelta] = [
+    (nextCol - currentCol) * square_size_px,
+    (nextRow - currentRow) * square_size_px,
+  ];
+
+  // Perform the animation
+  d3.select(selector)
+    .transition()
+    .style("right", -xDelta + "px")
+    .style("bottom", -yDelta + "px")
+    .duration(ANIM_DURATION)
+    .ease(d3.easeSinInOut);
+
+  // If the player chose to do nothing then flash a warning symbol
+  if (xDelta === 0 && yDelta === 0) {
+    d3.select(d3.select(selector).node().parentNode)
+      .append("img")
+      .style("position", "absolute")
+      .style("bottom", "0px")
+      .style("right", "0px")
+      .style("height", "50px")
+      .style("width", "50px")
+      .style("z-index", "20")
+      .style("opacity", "1")
+      .attr("src", DENY_IMG)
+      .transition()
+      .style("opacity", 0)
+      .duration(ANIM_DURATION)
+      .ease(d3.easeQuadIn);
+  }
+
+  // Disable buttons while animating
+  document.getElementById("interface").remove();
+  drawInterface(true);
+
+  // Once the animation is finished, change to new instance
+  setTimeout(() => {
+    SELECTED_INSTANCE += 1;
+    main();
+  }, ANIM_DURATION);
+};
+
+const previousInstance = () => {
+  if (SELECTED_INSTANCE === 0) {
+    return;
+  }
+
+  SELECTED_INSTANCE -= 1;
+  main();
 };
 
 /**
@@ -102,15 +270,20 @@ const draw = (mazeLayout) => {
     .style("align-items", "center")
     .style("justify-content", "center");
 
-  drawInterface(mazeLayout);
+  drawInterface(false);
   drawMaze(mazeLayout);
 };
 
 /**
  * Draw the interface components of the visualizer
  */
-const drawInterface = (mazeLayout) => {
-  const container = d3.select(div).append("div").style("min-width", "300px");
+const drawInterface = (buttonsDisabled) => {
+  const container = d3
+    .select(div)
+    .append("div")
+    .lower()
+    .style("min-width", "300px")
+    .attr("id", "interface");
 
   // Add current turn
   container
@@ -143,7 +316,7 @@ const drawInterface = (mazeLayout) => {
     .attr(DO_DRAW_INDICES ? "checked" : "data-dummy", "")
     .on("change", () => {
       DO_DRAW_INDICES = !DO_DRAW_INDICES;
-      draw(mazeLayout);
+      main();
     });
   d3.select("#options")
     .append("label")
@@ -162,12 +335,59 @@ const drawInterface = (mazeLayout) => {
     .attr(DO_DRAW_THESEUS_DISTANCE ? "checked" : "data-dummy", "")
     .on("change", () => {
       DO_DRAW_THESEUS_DISTANCE = !DO_DRAW_THESEUS_DISTANCE;
-      draw(mazeLayout);
+      main();
     });
   d3.select("#options")
     .append("label")
     .attr("for", "draw_theseus_dist")
     .text("Draw distance from Theseus");
+
+  // Add instance chooser
+  container
+    .append("div")
+    .attr("id", "instance-chooser")
+    .style("border", "1px solid black")
+    .style("padding", "3px")
+    .append("h2")
+    .text("Instance Chooser");
+
+  d3.select("#instance-chooser")
+    .append("div")
+    .text(`Current Instance: ${SELECTED_INSTANCE}`);
+  d3.select("#instance-chooser")
+    .append("button")
+    .attr("type", "button")
+    .attr(buttonsDisabled ? "disabled" : "data-dummy", "")
+    .on("click", () => {
+      SELECTED_INSTANCE = 0;
+      main();
+    })
+    .text("<<");
+  d3.select("#instance-chooser")
+    .append("button")
+    .attr("type", "button")
+    .attr(buttonsDisabled ? "disabled" : "data-dummy", "")
+    .on("click", () => {
+      previousInstance();
+    })
+    .text("<");
+  d3.select("#instance-chooser")
+    .append("button")
+    .attr("type", "button")
+    .attr(buttonsDisabled ? "disabled" : "data-dummy", "")
+    .on("click", () => {
+      nextInstance();
+    })
+    .text(">");
+  d3.select("#instance-chooser")
+    .append("button")
+    .attr("type", "button")
+    .attr(buttonsDisabled ? "disabled" : "data-dummy", "")
+    .on("click", () => {
+      SELECTED_INSTANCE = instances.length - 1;
+      main();
+    })
+    .text(">>");
 };
 
 /**
@@ -176,9 +396,15 @@ const drawInterface = (mazeLayout) => {
  */
 const drawMaze = (mazeLayout) => {
   // figure out the row and col of the square that theseus, the minotaur, and the exit are at.
-  const [theseusRow, theseusCol] = getRowAndCol(Theseus.join(location));
-  const [minotaurRow, minotaurCol] = getRowAndCol(Minotaur.join(location));
-  const [exitRow, exitCol] = getRowAndCol(Exit.join(position));
+  const [theseusRow, theseusCol] = getRowAndCol(
+    getSig("Theseus").join(getRelation("location"))
+  );
+  const [minotaurRow, minotaurCol] = getRowAndCol(
+    getSig("Minotaur").join(getRelation("location"))
+  );
+  const [exitRow, exitCol] = getRowAndCol(
+    getSig("Exit").join(getRelation("position"))
+  );
 
   // Create the container to hold the maze
   let mazeContainer = d3
@@ -198,7 +424,6 @@ const drawMaze = (mazeLayout) => {
     // Loop through every square in the row
     for (let c = 0; c < mazeLayout[0].length; c++) {
       //Figure out the name (as a string) and the walls for this square
-      const square = mazeLayout[r][c];
       const walls = findWalls(r, c, mazeLayout);
 
       // Create a `div` for this container and style it
@@ -232,32 +457,22 @@ const drawMaze = (mazeLayout) => {
 
       // if the exit is at this location, add a dot
       if (r == exitRow && c == exitCol) {
-        appendImgToDiv(`#maze-square-${r}${c}`, EXIT_IMG);
+        appendImgToDiv(`#maze-square-${r}${c}`, EXIT_IMG, "exit-img");
       }
       // If theseus is at this location, add a dot
       if (r == theseusRow && c == theseusCol) {
-        appendImgToDiv(`#maze-square-${r}${c}`, THESEUS_IMG);
+        appendImgToDiv(`#maze-square-${r}${c}`, THESEUS_IMG, "theseus-img");
       }
       // If the minotaur is at this location, add a dot
       if (r == minotaurRow && c == minotaurCol) {
-        appendImgToDiv(`#maze-square-${r}${c}`, MINOTAUR_IMG);
+        appendImgToDiv(`#maze-square-${r}${c}`, MINOTAUR_IMG, "minotaur-img");
       }
     }
   }
 };
 
 const main = () => {
-  // Make a 2d array that will have MAZE_WIDTH cols and MAZE_HEIGHT rows
-  let mazeLayout = [];
-  for (let i = 0; i < MAZE_HEIGHT; i++) {
-    mazeLayout.push(Array(MAZE_WIDTH));
-  }
-  for (const square of Square.atoms()) {
-    let r = forgeIntToJsInt(square.join(row).tuples()[0]);
-    let c = forgeIntToJsInt(square.join(col).tuples()[0]);
-    mazeLayout[r][c] = square;
-  }
-
+  let mazeLayout = getMazeLayout();
   draw(mazeLayout);
 };
 
