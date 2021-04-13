@@ -1,3 +1,5 @@
+import * as d3 from "d3";
+
 const MAZE_WIDTH = 4;
 const MAZE_HEIGHT = 4;
 
@@ -9,8 +11,10 @@ const MINOTAUR_IMG = "https://files.paulbiberstein.me/minotaur.png";
 const EXIT_IMG =
   "http://www.slate.com/content/dam/slate/archive/2010/03/1_123125_2245632_2246167_2247195_100308_signs_exit_greentn.jpg";
 
-const DO_DRAW_INDICES = false;
-const DO_DRAW_THESEUS_DISTANCE = true;
+let DO_DRAW_INDICES = false;
+let DO_DRAW_THESEUS_DISTANCE = false;
+
+const SELECTED_INSTANCE = 0;
 
 /**
  * Function to convert forge integer tuples to javascript integers
@@ -29,6 +33,11 @@ const forgeIntToJsInt = (forgeInt) => forgeInt.atoms()[0].id();
  */
 const manhattanDistance = (r1, c1, r2, c2) =>
   Math.abs(r1 - r2) + Math.abs(c1 - c2);
+
+const getRowAndCol = (square) => [
+  square.join(row).tuples()[0].atoms()[0].id(),
+  square.join(col).tuples()[0].atoms()[0].id(),
+];
 
 /**
  * Queries the current turn and returns an image url corresponding
@@ -83,6 +92,9 @@ const appendImgToDiv = (divSelector, imageSrc) => {
  * @param {number[][]} mazeLayout two dimensional array to resolve coordinates to Forge atoms
  */
 const draw = (mazeLayout) => {
+  // Clear container before drawing
+  d3.select(div).html("");
+
   // Adjust the container so that our visualization is centered
   d3.select(div)
     .style("display", "flex")
@@ -90,14 +102,14 @@ const draw = (mazeLayout) => {
     .style("align-items", "center")
     .style("justify-content", "center");
 
-  drawInterface();
+  drawInterface(mazeLayout);
   drawMaze(mazeLayout);
 };
 
 /**
  * Draw the interface components of the visualizer
  */
-const drawInterface = () => {
+const drawInterface = (mazeLayout) => {
   const container = d3.select(div).append("div").style("min-width", "300px");
 
   // Add current turn
@@ -112,6 +124,50 @@ const drawInterface = () => {
     .append("img")
     .attr("src", getImgForCurrentTurn())
     .style("height", "40px");
+
+  // Add options
+  container
+    .append("div")
+    .attr("id", "options")
+    .style("border", "1px solid black")
+    .style("padding", "3px")
+    .append("h2")
+    .text("Options");
+  // Draw draw_ids checkbox
+  d3.select("#options")
+    .append("input")
+    .attr("type", "checkbox")
+    .attr("id", "draw_ids")
+    .attr("name", "draw_ids")
+    .style("margin", ".4rem")
+    .attr(DO_DRAW_INDICES ? "checked" : "data-dummy", "")
+    .on("change", () => {
+      DO_DRAW_INDICES = !DO_DRAW_INDICES;
+      draw(mazeLayout);
+    });
+  d3.select("#options")
+    .append("label")
+    .attr("for", "draw_ids")
+    .text("Draw square indices");
+
+  d3.select("#options").append("br");
+
+  // Draw draw_theseus_dist checkbox
+  d3.select("#options")
+    .append("input")
+    .attr("type", "checkbox")
+    .attr("id", "draw_theseus_dist")
+    .attr("name", "draw_theseus_dist")
+    .style("margin", ".4rem")
+    .attr(DO_DRAW_THESEUS_DISTANCE ? "checked" : "data-dummy", "")
+    .on("change", () => {
+      DO_DRAW_THESEUS_DISTANCE = !DO_DRAW_THESEUS_DISTANCE;
+      draw(mazeLayout);
+    });
+  d3.select("#options")
+    .append("label")
+    .attr("for", "draw_theseus_dist")
+    .text("Draw distance from Theseus");
 };
 
 /**
@@ -119,23 +175,10 @@ const drawInterface = () => {
  * @param {number[][]} mazeLayout
  */
 const drawMaze = (mazeLayout) => {
-  // figure out the name (as a string) of the square that theseus, the minotaur, and the exit are at
-  const theseusLocationId = Theseus.join(location).tuples()[0].atoms()[0].id();
-  const theseusRow = Theseus.join(location)
-    .join(row)
-    .tuples()[0]
-    .atoms()[0]
-    .id();
-  const theseusCol = Theseus.join(location)
-    .join(col)
-    .tuples()[0]
-    .atoms()[0]
-    .id();
-  const minotaurLocationId = Minotaur.join(location)
-    .tuples()[0]
-    .atoms()[0]
-    .id();
-  const exitLocationId = Exit.join(position).tuples()[0].atoms()[0].id();
+  // figure out the row and col of the square that theseus, the minotaur, and the exit are at.
+  const [theseusRow, theseusCol] = getRowAndCol(Theseus.join(location));
+  const [minotaurRow, minotaurCol] = getRowAndCol(Minotaur.join(location));
+  const [exitRow, exitCol] = getRowAndCol(Exit.join(position));
 
   // Create the container to hold the maze
   let mazeContainer = d3
@@ -156,7 +199,6 @@ const drawMaze = (mazeLayout) => {
     for (let c = 0; c < mazeLayout[0].length; c++) {
       //Figure out the name (as a string) and the walls for this square
       const square = mazeLayout[r][c];
-      const squareId = square.tuples()[0].atoms()[0].id();
       const walls = findWalls(r, c, mazeLayout);
 
       // Create a `div` for this container and style it
@@ -189,15 +231,15 @@ const drawMaze = (mazeLayout) => {
       }
 
       // if the exit is at this location, add a dot
-      if (squareId === exitLocationId) {
+      if (r == exitRow && c == exitCol) {
         appendImgToDiv(`#maze-square-${r}${c}`, EXIT_IMG);
       }
       // If theseus is at this location, add a dot
-      if (squareId === theseusLocationId) {
+      if (r == theseusRow && c == theseusCol) {
         appendImgToDiv(`#maze-square-${r}${c}`, THESEUS_IMG);
       }
       // If the minotaur is at this location, add a dot
-      if (squareId === minotaurLocationId) {
+      if (r == minotaurRow && c == minotaurCol) {
         appendImgToDiv(`#maze-square-${r}${c}`, MINOTAUR_IMG);
       }
     }
@@ -216,8 +258,6 @@ const main = () => {
     mazeLayout[r][c] = square;
   }
 
-  // Clear container before drawing
-  d3.select(div).html("");
   draw(mazeLayout);
 };
 
