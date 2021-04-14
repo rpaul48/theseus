@@ -12,6 +12,8 @@ const EXIT_IMG =
   "http://www.slate.com/content/dam/slate/archive/2010/03/1_123125_2245632_2246167_2247195_100308_signs_exit_greentn.jpg";
 const DENY_IMG =
   "https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/ProhibitionSign2.svg/1200px-ProhibitionSign2.svg.png";
+const CONGRATULATIONS_IMG =
+  "https://lh3.googleusercontent.com/proxy/nsG0GKPnl47ekurpJntWym5qVDXtt5EPgdYkDXn46AK00rDWbMH5cqmn_WVXhpv04iERowjqTc91n2ZM89uGdnKobb-KWPfeFfD8gQxxVFSgHfMLGFOrNU7Vqg";
 
 let DO_DRAW_INDICES = false;
 let DO_DRAW_THESEUS_DISTANCE = false;
@@ -272,6 +274,7 @@ const draw = (mazeLayout) => {
 
   drawInterface(false);
   drawMaze(mazeLayout);
+  drawCongratulations();
 };
 
 /**
@@ -468,6 +471,40 @@ const drawMaze = (mazeLayout) => {
         appendImgToDiv(`#maze-square-${r}${c}`, MINOTAUR_IMG, "minotaur-img");
       }
     }
+  }
+};
+
+const drawCongratulations = () => {
+  const [theseusRow, theseusCol] = getRowAndCol(
+    getSig("Theseus").join(getRelation("location"))
+  );
+  const [exitRow, exitCol] = getRowAndCol(
+    getSig("Exit").join(getRelation("position"))
+  );
+
+  if (theseusRow === exitRow && theseusCol === exitCol) {
+    d3.select(div)
+      .append("div")
+      .attr("id", "banner-container")
+      .style("position", "relative")
+      .style("width", "100%")
+      .style("display", "flex")
+      .style("flex-direction", "column")
+      .style("align-items", "center")
+      .style("justify-content", "center")
+      .append("img")
+      .attr("id", "congratulations-banner")
+      .attr("src", CONGRATULATIONS_IMG)
+      .style("position", "absolute")
+      .style("top", "50px")
+      .style("width", "100px")
+      .style("height", "auto")
+      .style("z-index", "30")
+      .transition()
+      .style("top", "-300px")
+      .style("width", "300px")
+      .ease(d3.easeBounceOut)
+      .duration(1000);
   }
 };
 
