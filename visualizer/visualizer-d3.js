@@ -18,6 +18,15 @@ const CONGRATULATIONS_IMG =
 let DO_DRAW_INDICES = false;
 let DO_DRAW_THESEUS_DISTANCE = false;
 
+// Manually track the selected instance
+let SELECTED_INSTANCE = 0;
+
+/**
+ * This gets set in the firstTimeInitialization function. It's usually
+ * equal to the number of instances but it can be less if theseus wins.
+ */
+let MAX_INSTANCE_INDEX = instances.length - 1;
+
 /**
  * This function wraps all relation accesses behind a function so we can manually control the selected instance
  * @param {string} relName
@@ -72,9 +81,6 @@ const getSig = (sigName, instance_index) => {
   }
   return instances[instance_index].signature(sigName);
 };
-
-// Manually track the selected instance
-let SELECTED_INSTANCE = 0;
 
 /**
  * Function to convert forge integer tuples to javascript integers
@@ -162,6 +168,10 @@ const appendImgToDiv = (divSelector, imageSrc, id) => {
     .attr("src", imageSrc);
 };
 
+/**
+ * Creates a 2d array of "square" atoms that accurately reflects "row" and "col" relations
+ * @returns 2d array of "square" atoms
+ */
 const getMazeLayout = () => {
   // Make a 2d array that will have MAZE_WIDTH cols and MAZE_HEIGHT rows
   let mazeLayout = [];
@@ -177,8 +187,11 @@ const getMazeLayout = () => {
   return mazeLayout;
 };
 
+/**
+ * Attempts to advance to the next instance (with animation)
+ */
 const nextInstance = () => {
-  if (SELECTED_INSTANCE === instances.length - 1) {
+  if (SELECTED_INSTANCE === MAX_INSTANCE_INDEX) {
     return;
   }
 
@@ -248,6 +261,9 @@ const nextInstance = () => {
   }, ANIM_DURATION);
 };
 
+/**
+ * Attempts to go to the previous instance
+ */
 const previousInstance = () => {
   if (SELECTED_INSTANCE === 0) {
     return;
@@ -387,7 +403,7 @@ const drawInterface = (buttonsDisabled) => {
     .attr("type", "button")
     .attr(buttonsDisabled ? "disabled" : "data-dummy", "")
     .on("click", () => {
-      SELECTED_INSTANCE = instances.length - 1;
+      SELECTED_INSTANCE = MAX_INSTANCE_INDEX;
       main();
     })
     .text(">>");
@@ -474,6 +490,9 @@ const drawMaze = (mazeLayout) => {
   }
 };
 
+/**
+ * Draw the congratulations sticker if the instance is a win
+ */
 const drawCongratulations = () => {
   const [theseusRow, theseusCol] = getRowAndCol(
     getSig("Theseus").join(getRelation("location"))
@@ -508,9 +527,37 @@ const drawCongratulations = () => {
   }
 };
 
+/**
+ * Call this function to recompute values and redraw the board for the currently SELECTED_INSTANCE
+ */
 const main = () => {
   let mazeLayout = getMazeLayout();
   draw(mazeLayout);
 };
 
-main();
+/**
+ * This function is called once when the visualizer starts up
+ */
+const firstTimeInitialization = () => {
+  // Compute what instance theseus wins at and track in global variable
+  for (let i = 0; i < instances.length; i++) {
+    const [theseusRow, theseusCol] = getRowAndCol(
+      getSig("Theseus", i).join(getRelation("location", i)),
+      i
+    );
+    const [exitRow, exitCol] = getRowAndCol(
+      getSig("Exit", i).join(getRelation("position", i)),
+      i
+    );
+
+    if (theseusRow === exitRow && theseusCol === exitCol) {
+      MAX_INSTANCE_INDEX = i;
+      break;
+    }
+  }
+
+  // Call the main draw function
+  main();
+};
+
+firstTimeInitialization();
