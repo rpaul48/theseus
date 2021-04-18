@@ -1,7 +1,7 @@
 # Theseus and the Minotaur
 
-## How The Model is Structured
-Our model represents the Theseus and the Minotaur logic puzzle as a sequence of game states in Electrum. We specify predicates for the game’s initial state and a measure of “validity” that must always be preserved. To model the puzzle’s rule that the Minotaur must move twice for every move Theseus makes, we specify the expected alternation of moves in a “traces” predicate. We also include predicates to express “interestingness” of the initial puzzle state, whether or not the end goal is for Theseus or the Minotaur to win, and variations of the strategies for Theseus and the Minotaur.
+## How the Model is Structured
+Our model represents the Theseus and the Minotaur logic puzzle by Robert Abbott as a sequence of game states in Electrum. We specify predicates for the game’s initial state and a measure of “validity” that must always be preserved. To model the puzzle’s rule that the Minotaur must move twice for every move Theseus makes, we specify the expected alternation of moves in a “traces” predicate. We also include predicates to express “interestingness” of the initial puzzle state, whether or not the end goal is for Theseus or the Minotaur to win, and variations of the strategies for Theseus and the Minotaur.
 
 ## Interpreting our Model’s Results
 An instance of our model represents the moves taken by Theseus and the Minotaur from the start state of the puzzle to the end state, which must be a victory for either of the characters. Our custom visualizer displays a maze with walls, icons for Theseus and the Minotaur, option toggles, and buttons to move forwards and backwards through the state sequence. If Theseus is able to make it to the goal, then he has won, otherwise if the Minotaur gets to Theseus first then Theseus has lost!
@@ -12,7 +12,7 @@ Depending on the predicates we run with, our model is able to prove various asse
 ## Scope and Limitations
 On scope, we imagined early on in the process that we’d be limited by Forge in the size of our maze and the number of moves, so we only model a 4x4 maze. We represent a maze by specifying the connections between squares such that the absence of a connection between two neighboring squares represents a wall, and we guarantee that there exists a path between any pair of squares in the maze. Even within a 4x4 maze, many of the “most interesting” examples would involve several turns and an especially intricate maze, but we were not able to get such examples to run due to computational constraints.
 
-## The Evolution of Our Goals
+## Evolution of Goals
 Initially, one of our target goals was to generalize our project to multiple sizes of mazes so we could verify and create solutions for actual puzzles, which were all larger than 4x4 and of various dimensions. However, due to the computational constraints of Forge, we could not create mazes larger than 4x4. In addition, with the way that our maze code is structured, we would need to hard-code the dimensions of the maze, so generating various sizes of mazes would not be possible. 
 
 In addition, our initial goals included determining what kinds of strategies for Theseus are the most effective to allow him to win across many random mazes  and determining what kinds of mazes work well for one particular strategy. However, we found that because Forge cannot quantify over different “runs” or instances, it was not possible to do so directly in Forge. Instead, we can generate mazes that work using one strategy using Forge, and then copy the instance manually and test it using another strategy.
