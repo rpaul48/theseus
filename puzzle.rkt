@@ -184,7 +184,7 @@ pred fartherFromMinotaur[start: Square, end: Square] {
 }
 
 pred theseusMoveToExit {
-  Theseus.location = Theseus.(location')
+  Minotaur.location = Minotaur.(location')
 
   // Necessary constraints for theseus not to be dumb
   Theseus.location' != Minotaur.location
@@ -192,27 +192,18 @@ pred theseusMoveToExit {
   
   { some sq: (Theseus.location).connections | { 
     closerToExit[Theseus.location, sq] 
-    sq.row = (Theseus.location).row
   }} => {
-    (Theseus.(location')).row = (Theseus.location).row
     (Theseus.(location')) in (Theseus.location).connections
     closerToExit[Theseus.location, Theseus.(location')]
   } else {
-    { some sq: (Theseus.location).connections | { 
-      closerToExit[Theseus.location, sq] 
-    }} => {
-      (Theseus.(location')) in (Theseus.location).connections
-      closerToExit[Theseus.location, Theseus.(location')]
-    } else {
-      // If no moves get him closer to exit, then he should just move
-      // (this is to prevent Theseus deadlock)
-      Theseus.location' in (Theseus.location).connections
-    } 
+    // If no moves get him closer to exit, then he should just move
+    // (this is to prevent Theseus deadlock)
+    Theseus.location' in (Theseus.location).connections
   }
 }
 
 pred theseusAwayFromMinotaur {
-  Theseus.location = Theseus.(location')
+  Minotaur.location = Minotaur.(location')
 
   // Necessary constraints for theseus not to be dumb
   Theseus.location' != Minotaur.location
@@ -220,22 +211,13 @@ pred theseusAwayFromMinotaur {
   
   { some sq: (Theseus.location).connections | { 
     fartherFromMinotaur[Theseus.location, sq] 
-    sq.row = (Theseus.location).row
   }} => {
-    (Theseus.(location')).row = (Theseus.location).row
     (Theseus.(location')) in (Theseus.location).connections
     fartherFromMinotaur[Theseus.location, Theseus.(location')]
   } else {
-    { some sq: (Theseus.location).connections | { 
-      fartherFromMinotaur[Theseus.location, sq] 
-    }} => {
-      (Theseus.(location')) in (Theseus.location).connections
-      fartherFromMinotaur[Theseus.location, Theseus.(location')]
-    } else {
-      // If no moves get him closer to exit, then he should just move
-      // (this is to prevent Theseus deadlock)
-      Theseus.location' in (Theseus.location).connections
-    } 
+    // If no moves get him closer to exit, then he should just move
+    // (this is to prevent Theseus deadlock)
+    Theseus.location' in (Theseus.location).connections
   }
 }
 
@@ -309,16 +291,36 @@ pred tracesWithLose {
   eventually lose
 }
 
-pred interesting {
-  -- Ensure that theseus starts at least 2 from the exist
+pred tracesWithTheseusMoveToExit {
+  validGame
+  init
+  
+  -- Regulate who can move at each turn
+  always {
+    Game.turn = TheseusTurn => {
+      theseusMoveToExit or doNothing
+    } else {
+      minotaurMove
+    }
+  }
 
-  sum[getDist[Theseus.location, Exit.position]] > 4
+  -- Turn must always change
+  always (Game.turn' = (Game.turn).next)
+
+  -- Game stops when we win or lose
+  always ((win => always doNothing) and (lose => always doNothing))
 }
 
-// run {
-//   tracesWithWin
-//   interesting
-// } for 16 Square, exactly 5 Int, exactly 3 PossibleTurn
+pred interesting {
+  -- Ensure that theseus starts at least 2 from the exist
+  sum[getDist[Theseus.location, Exit.position]] > 2
+}
+
+run {
+  tracesWithTheseusMoveToExit
+  eventually(win)
+  // interesting
+} for 16 Square, exactly 5 Int, exactly 3 PossibleTurn
 
 
 // See video for instance
