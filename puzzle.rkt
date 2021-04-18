@@ -184,7 +184,7 @@ pred fartherFromMinotaur[start: Square, end: Square] {
 }
 
 pred theseusMoveToExit {
-  Theseus.location = Theseus.(location')
+  Minotaur.location = Minotaur.(location')
 
   // Necessary constraints for theseus not to be dumb
   Theseus.location' != Minotaur.location
@@ -212,7 +212,7 @@ pred theseusMoveToExit {
 }
 
 pred theseusAwayFromMinotaur {
-  Theseus.location = Theseus.(location')
+  Minotaur.location = Minotaur.(location')
 
   // Necessary constraints for theseus not to be dumb
   Theseus.location' != Minotaur.location
