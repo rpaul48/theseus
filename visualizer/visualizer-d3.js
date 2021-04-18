@@ -12,8 +12,7 @@ const EXIT_IMG =
   "http://www.slate.com/content/dam/slate/archive/2010/03/1_123125_2245632_2246167_2247195_100308_signs_exit_greentn.jpg";
 const DENY_IMG =
   "https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/ProhibitionSign2.svg/1200px-ProhibitionSign2.svg.png";
-const CONGRATULATIONS_IMG =
-  "https://lh3.googleusercontent.com/proxy/u5lNdSSWlA5pqSrtfVwJ9_t2_g5vwweA4syddDj-WbUDFdCA-Cu_JMP04vbehLoYBIzcaI8qbMVnxM63QJItswP9Wcgrk-muwZtruJ7yDjBRi-1IGc9Z9_-o1Q";
+const CONGRATULATIONS_IMG = "https://files.paulbiberstein.me/winner.png";
 
 let DO_DRAW_INDICES = false;
 let DO_DRAW_THESEUS_DISTANCE = false;
