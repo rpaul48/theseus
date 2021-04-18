@@ -13,7 +13,7 @@ const EXIT_IMG =
 const DENY_IMG =
   "https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/ProhibitionSign2.svg/1200px-ProhibitionSign2.svg.png";
 const CONGRATULATIONS_IMG =
-  "https://lh3.googleusercontent.com/proxy/nsG0GKPnl47ekurpJntWym5qVDXtt5EPgdYkDXn46AK00rDWbMH5cqmn_WVXhpv04iERowjqTc91n2ZM89uGdnKobb-KWPfeFfD8gQxxVFSgHfMLGFOrNU7Vqg";
+  "https://lh3.googleusercontent.com/proxy/u5lNdSSWlA5pqSrtfVwJ9_t2_g5vwweA4syddDj-WbUDFdCA-Cu_JMP04vbehLoYBIzcaI8qbMVnxM63QJItswP9Wcgrk-muwZtruJ7yDjBRi-1IGc9Z9_-o1Q";
 
 let DO_DRAW_INDICES = false;
 let DO_DRAW_THESEUS_DISTANCE = false;
