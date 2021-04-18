@@ -329,7 +329,13 @@ inst mazeWithFakeOut {
 
 inst mazeGuaranteedLose {
    /*
-  NOTE TO SRESHTAA: Fill in what this maze looks like
+  Minotaur at column 1 row 2. Theseus at column 0, row 3
+  E: Exit
+   _ _ _ _
+  |_   _| |
+  |       |
+  | |M    |
+  |T _|_|E|
   */
   Square = Square0 + Square1 + Square2 + Square3 + Square4 + Square5 + Square6 + 
           Square7 + Square8 + Square9 + Square10 + Square11 + Square12 + Square13 + Square14 + Square15
