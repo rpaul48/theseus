@@ -175,6 +175,70 @@ pred closerToTheseus[start: Square, end: Square] {
   sum[getDist[start, Theseus.location]] > sum[getDist[end, Theseus.location]]
 }
 
+pred closerToExit[start: Square, end: Square] {
+  sum[getDist[start, Exit.position]] > sum[getDist[end, Exit.position]]
+}
+
+pred fartherFromMinotaur[start: Square, end: Square] {
+  sum[getDist[start, Minotaur.location]] < sum[getDist[end, Minotaur.location]]
+}
+
+pred theseusMoveToExit {
+  Theseus.location = Theseus.(location')
+
+  // Necessary constraints for theseus not to be dumb
+  Theseus.location' != Minotaur.location
+  Exit.position in (Theseus.location).connections => {Theseus.location' = Exit.position}
+  
+  { some sq: (Theseus.location).connections | { 
+    closerToExit[Theseus.location, sq] 
+    sq.row = (Theseus.location).row
+  }} => {
+    (Theseus.(location')).row = (Theseus.location).row
+    (Theseus.(location')) in (Theseus.location).connections
+    closerToExit[Theseus.location, Theseus.(location')]
+  } else {
+    { some sq: (Theseus.location).connections | { 
+      closerToExit[Theseus.location, sq] 
+    }} => {
+      (Theseus.(location')) in (Theseus.location).connections
+      closerToExit[Theseus.location, Theseus.(location')]
+    } else {
+      // If no moves get him closer to exit, then he should just move
+      // (this is to prevent Theseus deadlock)
+      Theseus.location' in (Theseus.location).connections
+    } 
+  }
+}
+
+pred theseusAwayFromMinotaur {
+  Theseus.location = Theseus.(location')
+
+  // Necessary constraints for theseus not to be dumb
+  Theseus.location' != Minotaur.location
+  Exit.position in (Theseus.location).connections => {Theseus.location' = Exit.position}
+  
+  { some sq: (Theseus.location).connections | { 
+    fartherFromMinotaur[Theseus.location, sq] 
+    sq.row = (Theseus.location).row
+  }} => {
+    (Theseus.(location')).row = (Theseus.location).row
+    (Theseus.(location')) in (Theseus.location).connections
+    fartherFromMinotaur[Theseus.location, Theseus.(location')]
+  } else {
+    { some sq: (Theseus.location).connections | { 
+      fartherFromMinotaur[Theseus.location, sq] 
+    }} => {
+      (Theseus.(location')) in (Theseus.location).connections
+      fartherFromMinotaur[Theseus.location, Theseus.(location')]
+    } else {
+      // If no moves get him closer to exit, then he should just move
+      // (this is to prevent Theseus deadlock)
+      Theseus.location' in (Theseus.location).connections
+    } 
+  }
+}
+
 pred minotaurMove {
   -- Theseus doesn't move
   Theseus.location = Theseus.(location')
@@ -308,13 +372,13 @@ inst mazeWithFakeOut {
   Player = Minotaur0 + Theseus0
 }
 
-// run {
-//   tracesWithWin
-//   sum[Theseus.location.row] = 0
-//   sum[Theseus.location.col] = 2
-//   sum[Minotaur.location.row] = 2
-//   sum[Minotaur.location.col] = 0
-// } for 16 Square, exactly 5 Int for mazeWithFakeOut
+run {
+  tracesWithWin
+  sum[Theseus.location.row] = 0
+  sum[Theseus.location.col] = 2
+  sum[Minotaur.location.row] = 2
+  sum[Minotaur.location.col] = 0
+} for 16 Square, exactly 5 Int for mazeWithFakeOut
 
 
 
