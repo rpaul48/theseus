@@ -320,7 +320,23 @@ run {
   sum[Minotaur.location.col] = 0
 } for 16 Square, exactly 5 Int for mazeWithFakeOut
 
+// test expect {
+//   mazeWithFakeOutWinnable: {
+//     tracesWithWin
+//     sum[Theseus.location.row] = 0
+//     sum[Theseus.location.col] = 2
+//     sum[Minotaur.location.row] = 2
+//     sum[Minotaur.location.col] = 0
+//   } for 16 Square, exactly 5 Int for mazeWithFakeOut is sat
 
+//   mazeWithFakeOutCannotFollowSimpleStrategy: {
+//     tracesWithTheseusMoveToExit
+//     sum[Theseus.location.row] = 0
+//     sum[Theseus.location.col] = 2
+//     sum[Minotaur.location.row] = 2
+//     sum[Minotaur.location.col] = 0
+//   } for 16 Square, exactly 5 Int for mazeWithFakeOut is unsat
+// }
 
 --================================== TESTS ==================================--
 
