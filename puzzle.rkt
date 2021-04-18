@@ -3,6 +3,8 @@
 option problem_type temporal
 option max_tracelength 14
 
+--================================== SIGS ==================================--
+
 abstract sig Player {
   var location: one Square
 }
@@ -31,6 +33,8 @@ one sig Exit {
   position: one Square
 }
 
+--================================== VALIDITY ==================================--
+
 pred validConnections {
   -- symmetric
   connections = ~connections
@@ -46,12 +50,6 @@ pred validConnections {
 
   -- path between all pairs of squares
   all sq1, sq2: Square | sq1 in sq2.^connections
-
-  -- ideas for walls
-  -- specify explicitly where walls should exist/how many
-  -- constrain num connections per square
-
-  -- no sq: Square | #sq.connections = 3
 }
 
 pred validGame {
@@ -89,6 +87,26 @@ pred init{
   Game.turn = TheseusTurn
 }
 
+--================================== BASIC MOVES ==================================--
+
+// HELPER FUNCTIONS
+fun getDist[s1: Square, s2: Square]: Int {
+  sing[add[abs[subtract[sum[s1.row], sum[s2.row]]], abs[subtract[sum[s1.col], sum[s2.col]]]]]
+}
+
+pred closerToTheseus[start: Square, end: Square] {
+  sum[getDist[start, Theseus.location]] > sum[getDist[end, Theseus.location]]
+}
+
+pred closerToExit[start: Square, end: Square] {
+  sum[getDist[start, Exit.position]] > sum[getDist[end, Exit.position]]
+}
+
+pred fartherFromMinotaur[start: Square, end: Square] {
+  sum[getDist[start, Minotaur.location]] < sum[getDist[end, Minotaur.location]]
+}
+
+// MOVES
 pred doNothing {
   location' = location
 }
@@ -106,21 +124,30 @@ pred theseusMove {
   Theseus.location' in (Theseus.location).connections
 }
 
-fun getDist[s1: Square, s2: Square]: Int {
-  sing[add[abs[subtract[sum[s1.row], sum[s2.row]]], abs[subtract[sum[s1.col], sum[s2.col]]]]]
+pred minotaurMove {
+  -- Theseus doesn't move
+  Theseus.location = Theseus.(location')
+  
+  { some sq: (Minotaur.location).connections | { 
+    closerToTheseus[Minotaur.location, sq] 
+    sq.row = (Minotaur.location).row
+  }} => {
+    (Minotaur.(location')).row = (Minotaur.location).row
+    (Minotaur.(location')) in (Minotaur.location).connections
+    closerToTheseus[Minotaur.location, Minotaur.(location')]
+  } else {
+    { some sq: (Minotaur.location).connections | { 
+      closerToTheseus[Minotaur.location, sq] 
+    }} => {
+      (Minotaur.(location')) in (Minotaur.location).connections
+      closerToTheseus[Minotaur.location, Minotaur.(location')]
+    } else {
+      doNothing
+    } 
+  }
 }
 
-pred closerToTheseus[start: Square, end: Square] {
-  sum[getDist[start, Theseus.location]] > sum[getDist[end, Theseus.location]]
-}
-
-pred closerToExit[start: Square, end: Square] {
-  sum[getDist[start, Exit.position]] > sum[getDist[end, Exit.position]]
-}
-
-pred fartherFromMinotaur[start: Square, end: Square] {
-  sum[getDist[start, Minotaur.location]] < sum[getDist[end, Minotaur.location]]
-}
+--================================== THESEUS STRATEGIES ==================================--
 
 pred theseusMoveToExit {
   Minotaur.location = Minotaur.(location')
@@ -160,30 +187,7 @@ pred theseusAwayFromMinotaur {
   }
 }
 
-pred minotaurMove {
-  -- Theseus doesn't move
-  Theseus.location = Theseus.(location')
-  
-  { some sq: (Minotaur.location).connections | { 
-    closerToTheseus[Minotaur.location, sq] 
-    sq.row = (Minotaur.location).row
-  }} => {
-    (Minotaur.(location')).row = (Minotaur.location).row
-    (Minotaur.(location')) in (Minotaur.location).connections
-    closerToTheseus[Minotaur.location, Minotaur.(location')]
-  } else {
-    { some sq: (Minotaur.location).connections | { 
-      closerToTheseus[Minotaur.location, sq] 
-    }} => {
-      (Minotaur.(location')) in (Minotaur.location).connections
-      closerToTheseus[Minotaur.location, Minotaur.(location')]
-    } else {
-      doNothing
-    } 
-  }
-
-
-}
+--================================== BASIC OUTCOMES ==================================--
 
 pred win {
   Theseus.location in Exit.position
@@ -213,12 +217,7 @@ pred traces {
   always ((win => always doNothing) and (lose => always doNothing))
 }
 
-// run {
-//   validGame 
-//   init
-//   theseusMove
-//   eventually (win)
-// } for 16 Square, exactly 5 Int
+--================================== SPECIAL OUTCOMES ==================================--
 
 pred tracesWithWin {
   traces
