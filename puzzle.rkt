@@ -3,6 +3,8 @@
 option problem_type temporal
 option max_tracelength 14
 
+--================================== SIGS ==================================--
+
 abstract sig Player {
   var location: one Square
 }
@@ -31,6 +33,8 @@ one sig Exit {
   position: one Square
 }
 
+--================================== VALIDITY ==================================--
+
 pred validConnections {
   -- symmetric
   connections = ~connections
@@ -46,12 +50,6 @@ pred validConnections {
 
   -- path between all pairs of squares
   all sq1, sq2: Square | sq1 in sq2.^connections
-
-  -- ideas for walls
-  -- specify explicitly where walls should exist/how many
-  -- constrain num connections per square
-
-  -- no sq: Square | #sq.connections = 3
 }
 
 pred validGame {
@@ -89,84 +87,9 @@ pred init{
   Game.turn = TheseusTurn
 }
 
-pred doNothing {
-  location' = location
-}
+--================================== BASIC MOVES ==================================--
 
-pred moveLeft[p : Player] {
-  p.location.col != sing[0]
-  
-  some sq : Square | {
-    -- Required indices
-    sq.col = sing[subtract[sum[(p.location).col], 1]]
-    sq.row = p.location.row
-
-    -- Must be able to move from current square to the left
-    sq in (p.location).connections
-  }
-  (p.location').col = sing[subtract[sum[p.location.col], 1]]
-  (p.location').row = p.location.row
-}
-
-pred moveRight[p : Player] {
-  p.location.col != sing[3]
-  
-  some sq : Square | {
-    -- Required indices
-    sq.col = sing[add[sum[(p.location).col], 1]]
-    sq.row = p.location.row
-
-    -- Must be able to move from current square to the right
-    sq in (p.location).connections
-  }
-  (p.location').col = sing[add[sum[p.location.col], 1]]
-  (p.location').row = p.location.row
-}
-
-pred moveDown[p : Player] {
-  p.location.row != sing[3]
-  
-  some sq : Square | {
-    -- Required indices
-    sq.row = sing[add[sum[(p.location).row], 1]]
-    sq.col = p.location.col
-
-    -- Must be able to move from current square to below
-    sq in (p.location).connections
-  }
-  (p.location').row = sing[add[sum[p.location.row], 1]]
-  (p.location').col = p.location.col
-}
-
-pred moveUp[p : Player] {
-  p.location.row != sing[0]
-  
-  some sq : Square | {
-    -- Required indices
-    sq.row = sing[subtract[sum[(p.location).row], 1]]
-    sq.col = p.location.col
-
-    -- Must be able to move from current square to above
-    sq in (p.location).connections
-  }
-  (p.location').row = sing[subtract[sum[p.location.row], 1]]
-  (p.location').col = p.location.col
-}
-
-
-pred theseusMove {
-  -- Minotaur doesn't move
-  Minotaur.location = Minotaur.(location')
-
-  -- Don't move to where the minotaur is
-  Theseus.location' != Minotaur.location
-
-  -- If Theseus can go to the exit, go to the exit
-  Exit.position in (Theseus.location).connections => {Theseus.location' = Exit.position}
-
-  Theseus.location' in (Theseus.location).connections
-}
-
+// HELPER FUNCTIONS
 fun getDist[s1: Square, s2: Square]: Int {
   sing[add[abs[subtract[sum[s1.row], sum[s2.row]]], abs[subtract[sum[s1.col], sum[s2.col]]]]]
 }
@@ -182,6 +105,49 @@ pred closerToExit[start: Square, end: Square] {
 pred fartherFromMinotaur[start: Square, end: Square] {
   sum[getDist[start, Minotaur.location]] < sum[getDist[end, Minotaur.location]]
 }
+
+// MOVES
+pred doNothing {
+  location' = location
+}
+
+pred theseusMove {
+  -- Minotaur doesn't move
+  Minotaur.location = Minotaur.(location')
+
+  -- Don't move to where the minotaur is
+  Theseus.location' != Minotaur.location
+
+  -- If Theseus can go to the exit, go to the exit
+  Exit.position in (Theseus.location).connections => {Theseus.location' = Exit.position}
+
+  Theseus.location' in (Theseus.location).connections
+}
+
+pred minotaurMove {
+  -- Theseus doesn't move
+  Theseus.location = Theseus.(location')
+  
+  { some sq: (Minotaur.location).connections | { 
+    closerToTheseus[Minotaur.location, sq] 
+    sq.row = (Minotaur.location).row
+  }} => {
+    (Minotaur.(location')).row = (Minotaur.location).row
+    (Minotaur.(location')) in (Minotaur.location).connections
+    closerToTheseus[Minotaur.location, Minotaur.(location')]
+  } else {
+    { some sq: (Minotaur.location).connections | { 
+      closerToTheseus[Minotaur.location, sq] 
+    }} => {
+      (Minotaur.(location')) in (Minotaur.location).connections
+      closerToTheseus[Minotaur.location, Minotaur.(location')]
+    } else {
+      doNothing
+    } 
+  }
+}
+
+--================================== THESEUS STRATEGIES ==================================--
 
 pred theseusMoveToExit {
   Minotaur.location = Minotaur.(location')
@@ -221,30 +187,7 @@ pred theseusAwayFromMinotaur {
   }
 }
 
-pred minotaurMove {
-  -- Theseus doesn't move
-  Theseus.location = Theseus.(location')
-  
-  { some sq: (Minotaur.location).connections | { 
-    closerToTheseus[Minotaur.location, sq] 
-    sq.row = (Minotaur.location).row
-  }} => {
-    (Minotaur.(location')).row = (Minotaur.location).row
-    (Minotaur.(location')) in (Minotaur.location).connections
-    closerToTheseus[Minotaur.location, Minotaur.(location')]
-  } else {
-    { some sq: (Minotaur.location).connections | { 
-      closerToTheseus[Minotaur.location, sq] 
-    }} => {
-      (Minotaur.(location')) in (Minotaur.location).connections
-      closerToTheseus[Minotaur.location, Minotaur.(location')]
-    } else {
-      doNothing
-    } 
-  }
-
-
-}
+--================================== BASIC OUTCOMES ==================================--
 
 pred win {
   Theseus.location in Exit.position
@@ -274,12 +217,7 @@ pred traces {
   always ((win => always doNothing) and (lose => always doNothing))
 }
 
-// run {
-//   validGame 
-//   init
-//   theseusMove
-//   eventually (win)
-// } for 16 Square, exactly 5 Int
+--================================== SPECIAL OUTCOMES ==================================--
 
 pred tracesWithWin {
   traces
