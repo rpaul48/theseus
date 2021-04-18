@@ -18,12 +18,13 @@ const CONGRATULATIONS_IMG =
 let DO_DRAW_INDICES = false;
 let DO_DRAW_THESEUS_DISTANCE = false;
 
-// Manually track the selected instance
+// Instead of relying on Sterling to track the current instance of the trace,
+// we'll manually track it here instead
 let SELECTED_INSTANCE = 0;
 
 /**
- * This gets set in the firstTimeInitialization function. It's usually
- * equal to the number of instances but it can be less if theseus wins.
+ * This is equal to the lower of the max instance or the instance where theseus wins.
+ * It's set in first time initialization
  */
 let MAX_INSTANCE_INDEX = instances.length - 1;
 
@@ -100,6 +101,12 @@ const forgeIntToJsInt = (forgeInt) => forgeInt.atoms()[0].id();
 const manhattanDistance = (r1, c1, r2, c2) =>
   Math.abs(r1 - r2) + Math.abs(c1 - c2);
 
+/**
+ * Gets the row and column for a given square of a given instance
+ * @param {AlloyAtom} square the square atom
+ * @param {number} inst instance to check. Defaults to selected instance
+ * @returns 2-tuple of row and col
+ */
 const getRowAndCol = (square, inst) => {
   if (inst === undefined) {
     inst = SELECTED_INSTANCE;
@@ -195,6 +202,7 @@ const nextInstance = () => {
     return;
   }
 
+  // Figure out whose turn it is to move and get a css selector for their image
   let [sigName, selector] =
     getSig("Game")
       .join(getRelation("turn"))
