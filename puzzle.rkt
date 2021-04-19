@@ -275,27 +275,40 @@ pred interesting {
   // sum[getDist[Theseus.location, Minotaur.location]] > 2
 }
 
+
+-- ==================== RUN STATEMENTS ====================================
+-- Uncomment to run a few different interesting scenario that we found
+
+-- Theseus starts next to the Minotaur but wins
 // run {
 //   Theseus.location in (Minotaur.location).connections
 //   tracesWithWin
 //   interesting
 // } for 16 Square, exactly 5 Int, exactly 3 PossibleTurn
 
-run {
-  tracesWithTheseusMoveToExit
-  eventually(lose)
-  interesting
-} for 16 Square, exactly 5 Int, exactly 3 PossibleTurn
-
+-- Theseus uses a naive strategy (move straight to exit) but loses
 // run {
-//   eventually ((Game.turn = TheseusTurn) and (theseusDoesntMoveToExit))
-//   tracesWithWin
+//   tracesWithTheseusMoveToExit
+//   eventually(lose)
+//   interesting
 // } for 16 Square, exactly 5 Int, exactly 3 PossibleTurn
+
+-- Theseus wins by not using the naive strategy
+// run {
+//   eventually ((Game.turn = TheseusTurn and not win and not lose) and (theseusDoesntMoveToExit))
+//   tracesWithWin
+//   interesting
+// } for 16 Square, exactly 5 Int, exactly 3 PossibleTurn for mazeWithFakeOutAlternate 
+
+
 
 
 --=========================== INTERESTING EXAMPLES ===========================--
 
-// See video for instance
+-- See video for instance
+-- This gives an example of us finding a maze with one solution (which can only
+-- be found by not using the naive approach) and showing that the solver also finds 
+-- this solution
 inst mazeWithFakeOut {
   /*
   Minotaur at column 0 row 2. Theseus at column 2, row 0
@@ -412,7 +425,7 @@ inst mazeGuaranteedLose {
         Square10->1 + Square11->1 + Square12->0 + Square13->0 + Square14->0 + Square15->0
   
   next = MinotaurTurn10->MinotaurTurn20 + MinotaurTurn20->TheseusTurn0 + TheseusTurn0->MinotaurTurn10
-  location = Theseus0->Square15 + Minotaur0->Square10
+  // location = Theseus0->Square15 + Minotaur0->Square10
   position = Exit0->Square2
   turn = Game0->TheseusTurn0
 }
