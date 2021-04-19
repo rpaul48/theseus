@@ -19,6 +19,8 @@ one sig Game {
 abstract sig PossibleTurn {
   next: one PossibleTurn
 }
+
+// three turns for convenience of expressing turn order
 one sig MinotaurTurn1 extends PossibleTurn {}
 one sig MinotaurTurn2 extends PossibleTurn {}
 one sig TheseusTurn extends PossibleTurn {}
@@ -56,6 +58,7 @@ pred validGame {
   -- Setup turn order
   next = MinotaurTurn1->MinotaurTurn2 + MinotaurTurn2->TheseusTurn + TheseusTurn->MinotaurTurn1
 
+  -- fixed maze grid size of 4x4
   -- 0-3 rows/columns
   all sq: Square | {
     sum[sq.row] >= 0 and sum[sq.row] < 4
@@ -94,14 +97,17 @@ fun getDist[s1: Square, s2: Square]: Int {
   sing[add[abs[subtract[sum[s1.row], sum[s2.row]]], abs[subtract[sum[s1.col], sum[s2.col]]]]]
 }
 
+// determines whether move from start -> end will move Minotaur closer to Theseus
 pred closerToTheseus[start: Square, end: Square] {
   sum[getDist[start, Theseus.location]] > sum[getDist[end, Theseus.location]]
 }
 
+// determines whether move from start -> end will move Player closer to exit
 pred closerToExit[start: Square, end: Square] {
   sum[getDist[start, Exit.position]] > sum[getDist[end, Exit.position]]
 }
 
+// determines whether move from start -> end will move Theseus farther from Minotaur
 pred fartherFromMinotaur[start: Square, end: Square] {
   sum[getDist[start, Minotaur.location]] < sum[getDist[end, Minotaur.location]]
 }
@@ -120,7 +126,6 @@ pred theseusMove {
 
   -- If Theseus can go to the exit, go to the exit
   Exit.position in (Theseus.location).connections => {Theseus.location' = Exit.position}
-
   Theseus.location' in (Theseus.location).connections
 }
 
@@ -128,7 +133,7 @@ pred minotaurMove {
   -- Theseus doesn't move
   Theseus.location = Theseus.(location')
   
-  { some sq: (Minotaur.location).connections | { 
+  { some sq: (Minotaur.location).connections | {
     closerToTheseus[Minotaur.location, sq] 
     sq.row = (Minotaur.location).row
   }} => {
@@ -251,9 +256,15 @@ pred tracesWithTheseusMoveToExit {
 
 pred interesting {
   -- Ensure that theseus starts at least 2 from the exist
-  //sum[getDist[Theseus.location, Exit.position]] > 2
-  sum[getDist[Theseus.location, Minotaur.position]] > 2
+  sum[getDist[Theseus.location, Exit.position]] > 3
+  // sum[getDist[Theseus.location, Minotaur.location]] > 2
 }
+
+// run {
+//   Theseus.location in (Minotaur.location).connections
+//   tracesWithWin
+//   interesting
+// } for 16 Square, exactly 5 Int, exactly 3 PossibleTurn
 
 // run {
 //   tracesWithTheseusMoveToExit
@@ -261,6 +272,8 @@ pred interesting {
 //   interesting
 // } for 16 Square, exactly 5 Int, exactly 3 PossibleTurn
 
+
+--=========================== INTERESTING EXAMPLES ===========================--
 
 // See video for instance
 inst mazeWithFakeOut {
@@ -313,13 +326,24 @@ inst mazeWithFakeOut {
   Player = Minotaur0 + Theseus0
 }
 
-run {
-  tracesWithWin
-  sum[Theseus.location.row] = 0
-  sum[Theseus.location.col] = 2
-  sum[Minotaur.location.row] = 2
-  sum[Minotaur.location.col] = 0
-} for mazeWithFakeOut
+test expect {
+  mazeWithFakeOutWinnable: {
+    tracesWithWin
+    sum[Theseus.location.row] = 0
+    sum[Theseus.location.col] = 2
+    sum[Minotaur.location.row] = 2
+    sum[Minotaur.location.col] = 0
+  } for 16 Square, exactly 5 Int for mazeWithFakeOut is sat
+
+  mazeWithFakeOutCannotFollowSimpleStrategy: {
+    tracesWithTheseusMoveToExit
+    eventually win
+    sum[Theseus.location.row] = 0
+    sum[Theseus.location.col] = 2
+    sum[Minotaur.location.row] = 2
+    sum[Minotaur.location.col] = 0
+  } for 16 Square, exactly 5 Int for mazeWithFakeOut is unsat
+}
 
 inst mazeGuaranteedLose {
    /*
@@ -393,16 +417,6 @@ test expect {
   } for 16 Square, exactly 5 Int for mazeGuaranteedLose is unsat 
 }
 
-run {
-  tracesWithWin
-  sum[Theseus.location.row] = 0
-  sum[Theseus.location.col] = 2
-  sum[Minotaur.location.row] = 2
-  sum[Minotaur.location.col] = 0
-} for 16 Square, exactly 5 Int for mazeWithFakeOut
-
-
-
 --================================== TESTS ==================================--
 
 --============================== general cases ==============================--
@@ -472,52 +486,52 @@ inst basicMaze {
 }
 
 
-// test expect {
-//   /*
-//   E: Exit
-//   M: Minotaur
-//   T: Theseus
-//    _ _ _ _
-//   |       |
-//   |    T  |
-//   |  _ _  |
-//   |_ _ M|E|
-//   */
-//   canWinTest: {
-//     tracesWithWin
-//     sum[Theseus.location.row] = 1
-//     sum[Theseus.location.col] = 2
-//     sum[Minotaur.location.row] = 3
-//     sum[Minotaur.location.col] = 2
-//   } for 16 Square, exactly 5 Int for basicMaze is sat 
+test expect {
+  /*
+  E: Exit
+  M: Minotaur
+  T: Theseus
+   _ _ _ _
+  |       |
+  |    T  |
+  |  _ _  |
+  |_ _ M|E|
+  */
+  canWinTest: {
+    tracesWithWin
+    sum[Theseus.location.row] = 1
+    sum[Theseus.location.col] = 2
+    sum[Minotaur.location.row] = 3
+    sum[Minotaur.location.col] = 2
+  } for 16 Square, exactly 5 Int for basicMaze is sat 
 
-//   /*
-//   E: Exit
-//   M: Minotaur
-//   T: Theseus
-//    _ _ _ _
-//   |       |
-//   |    M  |
-//   |  _ _  |
-//   |_ _ T|E|
+  /*
+  E: Exit
+  M: Minotaur
+  T: Theseus
+   _ _ _ _
+  |       |
+  |    M  |
+  |  _ _  |
+  |_ _ T|E|
 
-//   */
-//   mustLoseTest1: {
-//     tracesWithWin
-//     sum[Minotaur.location.row] = 1
-//     sum[Minotaur.location.col] = 2
-//     sum[Theseus.location.row] = 3
-//     sum[Theseus.location.col] = 2
-//   } for 16 Square, exactly 5 Int for basicMaze is unsat 
+  */
+  mustLoseTest1: {
+    tracesWithWin
+    sum[Minotaur.location.row] = 1
+    sum[Minotaur.location.col] = 2
+    sum[Theseus.location.row] = 3
+    sum[Theseus.location.col] = 2
+  } for 16 Square, exactly 5 Int for basicMaze is unsat 
 
-//   mustLoseTest2: {
-//     tracesWithLose
-//     sum[Minotaur.location.row] = 1
-//     sum[Minotaur.location.col] = 2
-//     sum[Theseus.location.row] = 3
-//     sum[Theseus.location.col] = 2
-//   } for 16 Square, exactly 5 Int for basicMaze is sat 
-// }
+  mustLoseTest2: {
+    tracesWithLose
+    sum[Minotaur.location.row] = 1
+    sum[Minotaur.location.col] = 2
+    sum[Theseus.location.row] = 3
+    sum[Theseus.location.col] = 2
+  } for 16 Square, exactly 5 Int for basicMaze is sat 
+}
 
 
 inst interestingMaze {
@@ -561,15 +575,15 @@ inst interestingMaze {
   Player = Minotaur0 + Theseus0
 }
 
-// test expect {
-//   theseusWinTest: {
-//     tracesWithWin
-//     sum[Theseus.location.row] = 1
-//     sum[Theseus.location.col] = 3
-//     sum[Minotaur.location.row] = 1
-//     sum[Minotaur.location.col] = 2
-//   } for 16 Square, exactly 5 Int for interestingMaze is sat 
-// }
+test expect {
+  theseusWinTest: {
+    tracesWithWin
+    sum[Theseus.location.row] = 1
+    sum[Theseus.location.col] = 3
+    sum[Minotaur.location.row] = 1
+    sum[Minotaur.location.col] = 2
+  } for 16 Square, exactly 5 Int for interestingMaze is sat 
+}
 
 
 --============================= validConnections =============================--
@@ -677,8 +691,8 @@ inst validGameExample {
   + Square15->Square11
 }
 
-// test expect {
-//   validGameExampleTest: { 
-//     validGame 
-//   } for 16 Square, exactly 5 Int for validGameExample is sat 
-// }
+test expect {
+  validGameExampleTest: { 
+    validGame 
+  } for 16 Square, exactly 5 Int for validGameExample is sat 
+}
