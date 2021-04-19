@@ -1,7 +1,7 @@
 #lang forge
 
 option problem_type temporal
-option max_tracelength 14
+option max_tracelength 24
 
 --================================== SIGS ==================================--
 
@@ -307,11 +307,19 @@ inst mazeWithFakeOut {
 
   Theseus = Theseus0
   Minotaur = Minotaur0
-
+ 
   Game = Game0
   Exit = Exit0
   Player = Minotaur0 + Theseus0
 }
+
+run {
+  tracesWithWin
+  sum[Theseus.location.row] = 0
+  sum[Theseus.location.col] = 2
+  sum[Minotaur.location.row] = 2
+  sum[Minotaur.location.col] = 0
+} for mazeWithFakeOut
 
 inst mazeGuaranteedLose {
    /*
@@ -385,13 +393,13 @@ test expect {
   } for 16 Square, exactly 5 Int for mazeGuaranteedLose is unsat 
 }
 
-// run {
-//   tracesWithWin
-//   sum[Theseus.location.row] = 0
-//   sum[Theseus.location.col] = 2
-//   sum[Minotaur.location.row] = 2
-//   sum[Minotaur.location.col] = 0
-// } for 16 Square, exactly 5 Int for mazeWithFakeOut
+run {
+  tracesWithWin
+  sum[Theseus.location.row] = 0
+  sum[Theseus.location.col] = 2
+  sum[Minotaur.location.row] = 2
+  sum[Minotaur.location.col] = 0
+} for 16 Square, exactly 5 Int for mazeWithFakeOut
 
 
 
