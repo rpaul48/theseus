@@ -421,19 +421,19 @@ test expect {
 
 --============================== general cases ==============================--
 
-// test expect {
-//   vacuityTraces: {
-//     traces
-//   } for 16 Square, exactly 5 Int is sat
+test expect {
+  vacuityTraces: {
+    traces
+  } for 16 Square, exactly 5 Int is sat
 
-//   vacuityWin: {
-//     tracesWithWin
-//   } for 16 Square, exactly 5 Int is sat
+  vacuityWin: {
+    tracesWithWin
+  } for 16 Square, exactly 5 Int is sat
 
-//   vacuityLose: {
-//     tracesWithLose
-//   } for 16 Square, exactly 5 Int is sat
-// }
+  vacuityLose: {
+    tracesWithLose
+  } for 16 Square, exactly 5 Int is sat
+}
 
 inst basicMaze {
   /*
@@ -582,9 +582,10 @@ test expect {
     sum[Theseus.location.col] = 3
     sum[Minotaur.location.row] = 1
     sum[Minotaur.location.col] = 2
-  } for 16 Square, exactly 5 Int for interestingMaze is sat 
+  } for 16 Square, exactly 5 Int for interestingMaze is unsat 
 }
 
+// NOTE: Maybe add other interesting examples with this maze?
 
 --============================= validConnections =============================--
 
@@ -624,29 +625,29 @@ inst connectionTwoHopsAway {
   + Square15->Square11 + Square14->Square7 + Square7->Square14
 }
 
-// test expect {
-//   pathBetweenAllPairsOfSquares: {
-//     validConnections => {
-//       all sq1, sq2: Square | sq2 in sq1.^connections
-//     }
-//   } for 16 Square, exactly 5 Int is theorem
+test expect {
+  pathBetweenAllPairsOfSquares: {
+    validConnections => {
+      all sq1, sq2: Square | sq2 in sq1.^connections
+    }
+  } for 16 Square, exactly 5 Int is theorem
 
-//   symmetricConnections: {
-//     validConnections => { connections = ~connections }
-//   } for 16 Square, exactly 5 Int is theorem
+  symmetricConnections: {
+    validConnections => { connections = ~connections }
+  } for 16 Square, exactly 5 Int is theorem
 
-//   nonreflexiveConnections: {
-//     validConnections => { no iden & connections }
-//   } for 16 Square, exactly 5 Int is theorem
+  nonreflexiveConnections: {
+    validConnections => { no iden & connections }
+  } for 16 Square, exactly 5 Int is theorem
 
-//   validConnectionsExampleTest: {
-//     validConnections
-//   } for 16 Square, exactly 5 Int for validConnectionsExample is sat
+  validConnectionsExampleTest: {
+    validConnections
+  } for 16 Square, exactly 5 Int for validConnectionsExample is sat
 
-//   connectionTwoHopsAwayTest: {
-//     validConnections
-//   } for 16 Square, exactly 5 Int for connectionTwoHopsAway is unsat
-// }
+  connectionTwoHopsAwayTest: {
+    validConnections
+  } for 16 Square, exactly 5 Int for connectionTwoHopsAway is unsat
+}
 
 --================================ validGame ================================--
 inst validGameExample {
