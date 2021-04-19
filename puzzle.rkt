@@ -173,6 +173,21 @@ pred theseusMoveToExit {
   }
 }
 
+pred theseusDoesntMoveToExit {
+  Minotaur.location = Minotaur.(location')
+
+  -- Necessary constraints for theseus not to be dumb
+  Theseus.location' != Minotaur.location
+  Exit.position in (Theseus.location).connections => {Theseus.location' = Exit.position}
+  
+  { some sq: (Theseus.location).connections | { 
+    closerToExit[Theseus.location, sq] 
+  }} => {
+    (Theseus.(location')) in (Theseus.location).connections
+    not closerToExit[Theseus.location, Theseus.(location')]
+  } 
+}
+
 pred theseusAwayFromMinotaur {
   Minotaur.location = Minotaur.(location')
 
@@ -266,10 +281,15 @@ pred interesting {
 //   interesting
 // } for 16 Square, exactly 5 Int, exactly 3 PossibleTurn
 
+run {
+  tracesWithTheseusMoveToExit
+  eventually(lose)
+  interesting
+} for 16 Square, exactly 5 Int, exactly 3 PossibleTurn
+
 // run {
-//   tracesWithTheseusMoveToExit
-//   eventually(lose)
-//   interesting
+//   eventually ((Game.turn = TheseusTurn) and (theseusDoesntMoveToExit))
+//   tracesWithWin
 // } for 16 Square, exactly 5 Int, exactly 3 PossibleTurn
 
 
